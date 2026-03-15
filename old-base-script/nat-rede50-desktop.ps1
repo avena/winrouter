@@ -1,3 +1,9 @@
+<#
+Este script configura uma rede NAT usando o recurso WinNAT do Windows para criar uma sub-rede isolada (192.168.50.x) que pode ser usada para conectar máquinas virtuais ou containers. Ele detecta as interfaces de rede disponíveis, permite ao usuário escolher uma interface WAN (conexão com a internet) e uma ou mais interfaces LAN (para a rede interna). O script então configura o NAT, atribui IPs às interfaces LAN, habilita o encaminhamento de IP e verifica a configuração final, exibindo informações úteis para o usuário.
+Uso: Execute este script no PowerShell com privilégios de administrador. Siga as instruções para selecionar as interfaces WAN e LAN. O script cuidará do resto da configuração.
+#>
+
+
 #!/usr/bin/env pwsh
 #Requires -RunAsAdministrator
 param()
@@ -19,13 +25,13 @@ Write-Host "Suporte a NAT confirmado. Prosseguindo..." -ForegroundColor Green
 # 1. Listar interfaces com numeração automática
 $adapters = Get-NetAdapter | Where-Object { $_.Status -eq 'Up' -or $_.Status -eq 'Disconnected' } | Sort-Object Status -Descending
 $interfaces = for ($i = 1; $i -le $adapters.Count; $i++) {
-    $adapter = $adapters[$i-1]
+    $adapter = $adapters[$i - 1]
     $ip = (Get-NetIPAddress -InterfaceIndex $adapter.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue).IPAddress
     [PSCustomObject]@{
-        Num = $i
-        Name = $adapter.Name
-        MAC = $adapter.MacAddress
-        IP = if ($ip) { $ip } else { "Nenhum" }
+        Num    = $i
+        Name   = $adapter.Name
+        MAC    = $adapter.MacAddress
+        IP     = if ($ip) { $ip } else { "Nenhum" }
         Status = $adapter.Status
     }
 }
@@ -73,7 +79,8 @@ Write-Host "  [4/6] Verificando rota padrao via '$($wanAdapter.Name)'..." -Foreg
 $wanGateway = (Get-NetRoute -InterfaceAlias $wanAdapter.Name -DestinationPrefix "0.0.0.0/0" -ErrorAction SilentlyContinue).NextHop
 if ($wanGateway) {
     Write-Host "   Gateway detectado: $wanGateway" -ForegroundColor Green
-} else {
+}
+else {
     Write-Warning "   Sem rota padrão detectada na WAN. Verifique conexão."
 }
 
@@ -83,7 +90,8 @@ Start-Sleep 1  # Aguarda propagação
 $natRule = Get-NetNat | Where-Object { $_.Name -like "*NAT-Rede50*" }
 if ($natRule) {
     Write-Host "   Regra NAT '$($natRule.Name)' ativa para $($natRule.InternalIPInterfaceAddressPrefix)" -ForegroundColor Green
-} else {
+}
+else {
     Write-Warning "   Regra NAT não encontrada após criação!"
 }
 

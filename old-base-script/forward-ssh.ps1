@@ -1,4 +1,11 @@
-param([int]$Port=22)
+<#
+Este script configura um redirecionamento de porta para permitir acesso SSH ao WSL (Windows Subsystem for Linux) a partir do Windows. Ele encontra o IP do WSL, limpa quaisquer redirecionamentos antigos, cria um novo redirecionamento para a porta especificada (padrão 22) e adiciona uma regra de firewall para permitir conexões. No final, exibe as informações de acesso para o usuário.
+Uso: Execute este script no PowerShell com privilégios de administrador. Você pode especificar a porta desejada como argumento, por exemplo: .\forward-ssh.ps1 -Port 2222
+
+#>
+
+# Define a porta padrão para SSH
+param([int]$Port = 22)
 
 Write-Host "Procurando IP do WSL..." -Foreground Cyan
 
@@ -13,7 +20,8 @@ if (-not $ipLine) {
 # Extrai IP: inet 172.22.117.202/20 -> 172.22.117.202
 if ($ipLine.Line -match 'inet\s+(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})') {
     $WSL_IP = $matches[1]
-} else {
+}
+else {
     Write-Error "ERRO: IP invalido: $($ipLine.Line)"
     exit 1
 }

@@ -1,3 +1,20 @@
+<#
+    Script para remover uma regra NAT do WinNAT no Windows 10/11, mesmo que esteja ativa e travada.
+    Funcionalidades:
+    - Lista regras NAT configuradas (ativas e inativas)
+    - Permite escolher uma regra para remover
+    - Tenta parar o serviço winnat por diversos métodos (Stop-Service, taskkill PID, taskkill /FI, sc stop)
+    - Desabilita winnat para prevenir recriacao automatica
+    - Remove a regra escolhida (Remove-NetNat) ou faz fallback removendo todas e recriando as demais
+    - Define IPEnableRouter = 0 para desabilitar roteamento
+    - Reabilita winnat se houver outras regras ativas
+    - Executa netsh reset para limpar cache de kernel e regras fantasmas
+    - Gera log detalhado das operacoes e resultados
+    Recomendacao: reinicie o PC apos rodar para garantir limpeza completa do cache.
+#>
+
+
+
 #!/usr/bin/env pwsh
 param(
     [string]$LogFile = "$(Get-Location)\remover-nat-$(Get-Date -Format 'yyyyMMdd-HHmmss').log"
@@ -9,7 +26,7 @@ function Write-Log {
     param([string]$Message, [string]$Level = "INFO")
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $logLine = "[$timestamp] [$Level] $Message"
-    Write-Host $logLine -ForegroundColor @{INFO='White'; WARN='Yellow'; ERROR='Red'; SUCCESS='Green'}[$Level]
+    Write-Host $logLine -ForegroundColor @{INFO = 'White'; WARN = 'Yellow'; ERROR = 'Red'; SUCCESS = 'Green' }[$Level]
     $logLine | Out-File -FilePath $LogFile -Append -Encoding UTF8
 }
 
@@ -87,7 +104,8 @@ function Stop-WinNatForced {
     Write-Log "Status FINAL winnat: $final" "INFO"
     if ($final -eq 'Stopped') {
         Write-Log "OK metodo 4." "SUCCESS"
-    } else {
+    }
+    else {
         Write-Log "winnat travado '$final'. Reboot recomendado." "ERROR"
     }
 }
@@ -175,10 +193,12 @@ try {
     if ($natExiste) {
         Remove-NetNat -Name $NatName -Confirm:$false -ErrorAction Stop
         Write-Log "Regra '$NatName' removida via Remove-NetNat." "SUCCESS"
-    } else {
+    }
+    else {
         Write-Log "Regra '$NatName' nao encontrada." "INFO"
     }
-} catch {
+}
+catch {
     Write-Log "Erro CIM Remove-NetNat: $($_.Exception.Message)" "WARN"
     Write-Log "Fallback: remove todas + recria demais..." "INFO"
 
@@ -186,17 +206,19 @@ try {
     try {
         Remove-NetNat -Confirm:$false -ErrorAction SilentlyContinue
         Write-Log "Fallback Remove-NetNat (todas) OK." "INFO"
-    } catch {
+    }
+    catch {
         Write-Log "Fallback falhou: $($_.Exception.Message)" "ERROR"
     }
 
     foreach ($outra in $outrasNats) {
         try {
             New-NetNat -Name $outra.Name `
-                       -InternalIPInterfaceAddressPrefix $outra.InternalIPInterfaceAddressPrefix `
-                       -ErrorAction Stop
+                -InternalIPInterfaceAddressPrefix $outra.InternalIPInterfaceAddressPrefix `
+                -ErrorAction Stop
             Write-Log "Recriada: $($outra.Name)" "SUCCESS"
-        } catch {
+        }
+        catch {
             Write-Log "Erro recriar '$($outra.Name)': $($_.Exception.Message)" "WARN"
         }
     }
@@ -208,7 +230,8 @@ try {
     Set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" `
         -Name "IPEnableRouter" -Value 0 -Type DWord -Force -ErrorAction Stop
     Write-Log "IPEnableRouter = 0 OK." "SUCCESS"
-} catch {
+}
+catch {
     Write-Log "Erro registro: $($_.Exception.Message)" "ERROR"
 }
 
@@ -219,7 +242,8 @@ Write-Log "Regras ATIVAS restantes: $($natsRestantes.Count)" "INFO"
 
 if ($natsRestantes.Count -eq 0) {
     Write-Log "Sem regras ativas. WinNAT permanece desabilitado." "SUCCESS"
-} else {
+}
+else {
     & sc.exe config winnat start= demand 2>&1 | Out-Null
     Start-Service -Name 'winnat' -ErrorAction SilentlyContinue
     Write-Log "WinNAT reabilitado (ha outras regras ativas)." "INFO"
@@ -234,18 +258,20 @@ Write-Log "netsh reset OK. Reboot aplica completamente." "WARN"
 
 # Verificacao final
 Write-Log "=== VERIFICACAO FINAL ===" "INFO"
-$natFinal  = Get-NetNat -Name $NatName -ErrorAction SilentlyContinue
-$svcFinal  = Get-Service -Name 'winnat' -ErrorAction SilentlyContinue
+$natFinal = Get-NetNat -Name $NatName -ErrorAction SilentlyContinue
+$svcFinal = Get-Service -Name 'winnat' -ErrorAction SilentlyContinue
 $routerFinal = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' -Name 'IPEnableRouter' -ErrorAction SilentlyContinue).IPEnableRouter
 
 # Sucesso = removida OU inativa (Active: False)
 $ok = $true
 if ($null -eq $natFinal) {
     Write-Log "OK: Regra '$NatName' removida da lista." "SUCCESS"
-} elseif ($natFinal.Active -eq $false) {
+}
+elseif ($natFinal.Active -eq $false) {
     Write-Log "OK: Regra '$NatName' inativa (Active=False). NAT desabilitado." "SUCCESS"
     Write-Log "    Cache fantasma sera limpo apos reboot (netsh reset executado)." "INFO"
-} else {
+}
+else {
     Write-Log "FALHA: Regra '$NatName' ainda ATIVA!" "ERROR"
     $ok = $false
 }
@@ -262,7 +288,8 @@ Write-Host ""
 if ($ok) {
     Write-Host "SUCESSO: NAT '$NatName' desabilitado!" -ForegroundColor Green
     Write-Host "Recomendado: reinicie o PC para limpar cache fantasma." -ForegroundColor Yellow
-} else {
+}
+else {
     Write-Host "FALHA: Regra '$NatName' ainda ativa!" -ForegroundColor Red
     Write-Host "Execute: sc config winnat start= disabled && reboot" -ForegroundColor Yellow
 }

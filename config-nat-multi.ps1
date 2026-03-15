@@ -1,10 +1,23 @@
+<#
+Script de configuração de NAT multi-rede para Windows 10/11 usando PowerShell.
+Permite configurar uma interface WAN (com acesso à internet) e múltiplas interfaces LAN (com redes privadas) usando o recurso de NAT do Windows.
+Funcionalidades:
+- Analisa o estado atual do sistema: IP forwarding, regras NAT, interfaces de rede.
+- Permite configurar uma nova rede NAT multi-interface, escolhendo a interface WAN e as interfaces LAN, e definindo as sub-redes para cada LAN.
+- Opção de limpeza total (Clean All) para remover todas as configurações de NAT e IP forwarding, retornando o sistema ao estado original.
+Requisitos:
+- Executar como Administrador
+- PowerShell 7 ou superior
+
+#>
+
 #Requires -Version 7
 
 # ==============================================================================
 # Self-elevation: relanca como Admin se necessario
 # ==============================================================================
 $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()
-           ).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if (-not $isAdmin) {
     Write-Host "Relancando como Administrador..." -ForegroundColor Yellow
@@ -20,9 +33,9 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
 # ==============================================================================
 # Log setup - salva na pasta do proprio script
 # ==============================================================================
-$LogDir   = $PSScriptRoot
+$LogDir = $PSScriptRoot
 $Timestamp = Get-Date -Format 'yyyyMMdd-HHmmss'
-$LogFile  = "$LogDir\config-nat-multi-$Timestamp.log"
+$LogFile = "$LogDir\config-nat-multi-$Timestamp.log"
 $LogLevels = @{ 'INFO' = 'Cyan'; 'WARN' = 'Yellow'; 'ERROR' = 'Red'; 'SUCCESS' = 'Green' }
 
 function Write-Log {
@@ -56,7 +69,7 @@ Write-Log "TIPO 1 - Analisando estado atual" 'INFO'
 
 # IP Forwarding
 $ipForwardVal = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" `
-    -Name IPEnableRouter -ErrorAction SilentlyContinue).IPEnableRouter
+        -Name IPEnableRouter -ErrorAction SilentlyContinue).IPEnableRouter
 $forwardStatus = if ($ipForwardVal -eq 1) { 'ATIVO' } else { 'INATIVO' }
 Write-Log "IPForwarding: $forwardStatus (valor=$ipForwardVal)" 'INFO'
 
@@ -69,15 +82,15 @@ foreach ($nat in $nats) {
 
 # Interfaces
 $adapters = Get-NetAdapter |
-    Where-Object { $_.Status -eq 'Up' -or $_.Status -eq 'Disconnected' } |
-    Sort-Object Status -Descending
+Where-Object { $_.Status -eq 'Up' -or $_.Status -eq 'Disconnected' } |
+Sort-Object Status -Descending
 
 $interfaces = for ($i = 0; $i -lt $adapters.Count; $i++) {
     $adapter = $adapters[$i]
-    $ips     = @(Get-NetIPAddress -InterfaceIndex $adapter.InterfaceIndex `
-                    -AddressFamily IPv4 -ErrorAction SilentlyContinue)
-    $ipMain  = if ($ips.Count -gt 0) { $ips[0].IPAddress } else { 'None' }
-    $allIPs  = if ($ips.Count -gt 0) { $ips.IPAddress -join ', ' } else { '' }
+    $ips = @(Get-NetIPAddress -InterfaceIndex $adapter.InterfaceIndex `
+            -AddressFamily IPv4 -ErrorAction SilentlyContinue)
+    $ipMain = if ($ips.Count -gt 0) { $ips[0].IPAddress } else { 'None' }
+    $allIPs = if ($ips.Count -gt 0) { $ips.IPAddress -join ', ' } else { '' }
 
     # Detecta gateway privado (.1) em qualquer faixa RFC1918
     $isGateway = $ips | Where-Object {
@@ -112,7 +125,7 @@ foreach ($iface in $interfaces) {
 }
 
 # Resumo executivo
-$gwCount   = ($interfaces | Where-Object { $_.GatewayNAT -ne 'Free' }).Count
+$gwCount = ($interfaces | Where-Object { $_.GatewayNAT -ne 'Free' }).Count
 $freeCount = ($interfaces | Where-Object { $_.GatewayNAT -eq 'Free' }).Count
 
 Write-Host ''
@@ -144,7 +157,8 @@ if ($acao -match '^[Nn]') {
     if ($nats.Count -gt 0) {
         $nats | Remove-NetNat -Confirm:$false -ErrorAction SilentlyContinue
         Write-Log "$($nats.Count) regra(s) NAT removida(s)" 'SUCCESS'
-    } else {
+    }
+    else {
         Write-Log "Nenhuma regra NAT para remover" 'INFO'
     }
 
@@ -155,8 +169,8 @@ if ($acao -match '^[Nn]') {
     foreach ($iface in ($interfaces | Where-Object { $_.GatewayNAT -ne 'Free' })) {
         $ifIndex = ($adapters | Where-Object Name -eq $iface.Name).InterfaceIndex
         Get-NetIPAddress -InterfaceIndex $ifIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue |
-            Where-Object { $_.IPAddress -match '^(10|172\.(1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.1$' } |
-            Remove-NetIPAddress -Confirm:$false -ErrorAction SilentlyContinue
+        Where-Object { $_.IPAddress -match '^(10|172\.(1[6-9]|2\d|3[01])|192\.168)\.\d{1,3}\.1$' } |
+        Remove-NetIPAddress -Confirm:$false -ErrorAction SilentlyContinue
         Write-Log "Gateway IP removido de: $($iface.Name)" 'SUCCESS'
     }
 
@@ -191,8 +205,8 @@ if (-not $wan) {
 Write-Log "WAN: $($wan.Name) [$($wan.IP)]" 'INFO'
 
 # LANs
-$lanInput    = (Read-Host "`nLetras das LANs (Free only, ex: B C)").ToUpper()
-$lanLetras   = $lanInput.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
+$lanInput = (Read-Host "`nLetras das LANs (Free only, ex: B C)").ToUpper()
+$lanLetras = $lanInput.Split(' ', [StringSplitOptions]::RemoveEmptyEntries)
 $lanAdapters = $interfaces | Where-Object { $lanLetras -contains $_.Letra -and $_.GatewayNAT -eq 'Free' }
 if (-not $lanAdapters) {
     Write-Log "ERRO: nenhuma LAN valida selecionada" 'ERROR'
@@ -206,7 +220,7 @@ $lanConfigs = @{}
 $base = 50
 foreach ($lan in $lanAdapters) {
     $sugestao = "192.168.$base.0/24"
-    $rede     = Read-Host "Rede para $($lan.Letra) - $($lan.Name) [$sugestao]"
+    $rede = Read-Host "Rede para $($lan.Letra) - $($lan.Name) [$sugestao]"
     if (-not $rede) { $rede = $sugestao }
     $lanConfigs[$lan.Letra] = $rede
     Write-Log "LAN $($lan.Letra): rede=$rede" 'INFO'
@@ -252,9 +266,9 @@ Write-Log "IPForwarding habilitado" 'SUCCESS'
 
 # 4. IPs gateway .1 nas LANs
 foreach ($lan in $lanAdapters) {
-    $rede    = $lanConfigs[$lan.Letra]
-    $ipGw    = ($rede -split '/')[0] -replace '\.0$', '.1'
-    $prefix  = 24
+    $rede = $lanConfigs[$lan.Letra]
+    $ipGw = ($rede -split '/')[0] -replace '\.0$', '.1'
+    $prefix = 24
     $ifIndex = ($adapters | Where-Object Name -eq $lan.Name).InterfaceIndex
 
     Write-LogCmd "Remove-NetIPAddress -InterfaceIndex $ifIndex -AddressFamily IPv4"
