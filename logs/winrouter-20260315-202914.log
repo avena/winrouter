@@ -1,0 +1,13 @@
+[2026-03-15 20:29:34] [INFO] Regra 'NAT-WinRouter-60': [INATIVA] (Exists=True)
+[2026-03-15 20:29:34] [INFO] Regra INATIVA detectada. Usando caminho rapido (sem parar winnat).
+[2026-03-15 20:29:34] [INFO] === Remocao de regra INATIVA: 'NAT-WinRouter-60' ===
+[2026-03-15 20:29:34] [WARN] Remove-NetNat falhou: Não há suporte à operação solicitada.
+[2026-03-15 20:29:34] [WARN] CIM direto falhou: Não há suporte à operação solicitada.
+[2026-03-15 20:29:34] [WARN] Tentando remocao via registro...
+[2026-03-15 20:29:34] [WARN] Registro nao encontrado. Regra sera limpa no reboot.
+[2026-03-15 20:29:34] [INFO] WinNAT marcado como disabled.
+[2026-03-15 20:29:34] [SUCCESS] IPEnableRouter = 0 OK.
+[2026-03-15 20:29:35] [INFO] === VERIFICACAO FINAL ===
+[2026-03-15 20:29:35] [INFO] IPEnableRouter final: 0
+[2026-03-15 20:29:35] [INFO] WinNAT final: StopPending / Disabled
+[2026-03-15 20:29:35] [SUCCESS] SUCESSO PARCIAL: 'NAT-WinRouter-60' inativa + winnat desabilitado. Limpar no reboot.
