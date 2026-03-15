@@ -57,5 +57,52 @@ function Write-LogCmd {
     Write-Log -Message "EXEC: $Cmd" -Level 'INFO'
 }
 
+# Cria um separador visual para novas seções do script
+function Write-Section {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Title
+    )
+    
+    Write-Host "" # Linha em branco para melhor leitura no console
+    Write-Log "=== $Title ===" -Level 'INFO'
+}
+
+# Loga passos sequenciais (ex: [1/5] Configurando rede...)
+function Write-Step {
+    param(
+        [Parameter(Mandatory = $true)]
+        [int]$Step,
+        
+        [Parameter(Mandatory = $true)]
+        [int]$Total,
+        
+        [Parameter(Mandatory = $true)]
+        [string]$Message
+    )
+    
+    Write-Log "[$Step/$Total] $Message" -Level 'INFO'
+}
+
+# Loga propriedades de um objeto para debug
+function Write-LogObject {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$InputObject,
+        
+        [string]$Message = "Object Dump"
+    )
+    
+    Write-Log "$Message" -Level 'DEBUG'
+    
+    # Formata o objeto como string (lista de propriedades) e loga cada linha
+    $StringRep = $InputObject | Out-String
+    foreach ($Line in ($StringRep -split "`r`n")) {
+        if (-not [string]::IsNullOrWhiteSpace($Line)) {
+            Write-Log "  $Line" -Level 'DEBUG'
+        }
+    }
+}
+
 # Exporta as funções
-Export-ModuleMember -Function Write-Log, Write-LogCmd
+Export-ModuleMember -Function Write-Log, Write-LogCmd, Write-Section, Write-Step, Write-LogObject
