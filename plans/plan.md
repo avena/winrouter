@@ -1,0 +1,83 @@
+# WinRouter Modularization Plan
+
+## Objective
+
+Transform the existing `config-nat-multi.ps1` script into a modular PowerShell structure with a main entry point `start-network.ps1` that loads modules from a `src/` directory. This plan is based on the provided tips and a more detailed modular structure.
+
+## Proposed Structure
+
+```
+winrouter/
+├── start-network.ps1          # entry point: self-elevation, loads modules, presents menu
+├── README.md
+│
+├── src/
+│   ├── WinRouter.psm1         # main module that dot-sources all components
+│   │
+│   ├── core/
+│   │   ├── Logger.ps1         # Write-Log, Write-LogCmd functions
+│   │   └── Elevation.ps1      # self-elevation, admin checks
+│   │
+│   ├── network/
+│   │   ├── Get-Interfaces.ps1     # interface analysis and reporting
+│   │   ├── Set-StaticIP.ps1       # configure static IP on interface
+│   │   └── Remove-StaticIP.ps1    # remove IP from interface
+│   │
+│   ├── nat/
+│   │   ├── Get-NatStatus.ps1      # list NAT rules and IPForwarding status
+│   │   ├── New-NatRule.ps1        # create NetNat rule
+│   │   └── Remove-NatRule.ps1     # remove NetNat rule(s)
+│   │
+│   ├── portforward/
+│   │   ├── New-PortForward.ps1    # add portproxy rule (SSH:22, HTTP:80, custom)
+│   │   ├── Get-PortForward.ps1    # list portproxy rules
+│   │   └── Remove-PortForward.ps1 # remove portproxy rule
+│   │
+│   └── docker/
+│       ├── Get-DockerNetworks.ps1  # list Docker bridge networks
+│       └── New-DockerNat.ps1       # add NAT for Docker networks
+│
+└── logs/                      # generated at runtime, should be in .gitignore
+```
+
+## Tarefas
+
+- [ ] **1. Estrutura de Diretórios:** Criar a estrutura de diretórios em `src/` com as subpastas: `core`, `network`, `nat`, `portforward`, `docker`.
+- [ ] **2. Módulo Principal:** Criar o arquivo `WinRouter.psm1` em `src/` que fará o dot-source de todos os arquivos `.ps1` nas subpastas.
+- [ ] **3. Módulos Core:**
+    - [ ] Criar `Logger.ps1` com as funções `Write-Log` and `Write-LogCmd`.
+    - [ ] Criar `Elevation.ps1` com a lógica de auto-elevação e checagens de administrador.
+- [ ] **4. Módulos de Rede:**
+    - [ ] Criar `Get-Interfaces.ps1` para análise e relatório das interfaces.
+    - [ ] Criar `Set-StaticIP.ps1` para configuração de IP estático.
+    - [ ] Criar `Remove-StaticIP.ps1` para remoção de IP.
+- [ ] **5. Módulos NAT:**
+    - [ ] Criar `Get-NatStatus.ps1` para listar as regras de NAT e o status do `IPForwarding`.
+    - [ ] Criar `New-NatRule.ps1` para a criação de regras `NetNat`.
+    - [ ] Criar `Remove-NatRule.ps1` para a remoção de regras `NetNat`.
+- [ ] **6. Módulos de Port Forwarding:**
+    - [ ] Criar `New-PortForward.ps1` para adicionar regras de `portproxy`.
+    - [ ] Criar `Get-PortForward.ps1` para listar as regras de `portproxy`.
+    - [ ] Criar `Remove-PortForward.ps1` para remover as regras de `portproxy`.
+- [ ] **7. Módulos Docker:**
+    - [ ] Criar `Get-DockerNetworks.ps1` para listar as redes `bridge` do Docker.
+    - [ ] Criar `New-DockerNat.ps1` para adicionar NAT para as redes Docker.
+- [ ] **8. Ponto de Entrada:** Criar o `start-network.ps1` no diretório raiz com:
+    - [ ] Lógica de auto-elevação.
+    - [ ] Carregamento do módulo (`Import-Module src\WinRouter.psm1`).
+    - [ ] Menu principal de interface.
+    - [ ] Despacho de função baseado na seleção do usuário.
+- [ ] **9. Documentação:** Atualizar o `README.md` para documentar a nova estrutura e uso.
+- [ ] **10. Testes:** Testar a funcionalidade para garantir que corresponde ao script original.
+
+## Benefits of This Approach
+
+- Each `.ps1` file has a single responsibility, making code easier to debug and maintain
+- Adding new functionality = creating new file in appropriate directory, automatically loaded
+- Functions can be tested in isolation by dot-sourcing the specific file
+- Clear separation of concerns: logging, elevation, network, NAT, portforward, Docker
+- Follows PowerShell best practices for modular scripting
+
+## Next Steps
+
+Please review this plan and provide feedback or approval to proceed with implementation.
