@@ -1,15 +1,3 @@
-<#
-.SYNOPSIS
-Remove a NAT rule, forcefully if necessary.
-
-.DESCRIPTION
-This script contains functions to remove a network NAT rule. It includes a robust function to stop the WinNAT service, even if it's stuck, and another function to handle the removal of the NAT rule itself, including fallbacks and system configuration changes.
-
-.FUNCTION Stop-WinNatForced
-Stops the WinNAT service using multiple methods to ensure it terminates.
-
-.FUNCTION Remove-WinRouterNatRule
-Removes a specified NAT rule, disables IP routing, and resets network configurations.
 #>
 
 if (-not (Get-Command Write-Log -ErrorAction SilentlyContinue)) {

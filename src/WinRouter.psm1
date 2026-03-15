@@ -24,6 +24,46 @@ catch {
   throw
 }
 
+# Network modules
+try {
+  Write-Verbose "Loading network modules..."
+    
+  # Network interface management
+  . "$PSScriptRoot\network\Get-Interfaces.ps1"
+  Write-Verbose "✓ Get-Interfaces module loaded"
+    
+  . "$PSScriptRoot\network\Set-StaticIP.ps1"
+  Write-Verbose "✓ Set-StaticIP module loaded"
+    
+  . "$PSScriptRoot\network\Remove-StaticIP.ps1"
+  Write-Verbose "✓ Remove-StaticIP module loaded"
+    
+}
+catch {
+  Write-Error "Failed to load network modules: $($_.Exception.Message)"
+  throw
+}
+
+# NAT modules
+try {
+  Write-Verbose "Loading NAT modules..."
+    
+  # NAT status and management
+  . "$PSScriptRoot\nat\Get-NatStatus.ps1"
+  Write-Verbose "✓ Get-NatStatus module loaded"
+    
+  . "$PSScriptRoot\nat\New-NatRule.ps1"
+  Write-Verbose "✓ New-NatRule module loaded"
+    
+  . "$PSScriptRoot\nat\Remove-NatRule.ps1"
+  Write-Verbose "✓ Remove-NatRule module loaded"
+    
+}
+catch {
+  Write-Error "Failed to load NAT modules: $($_.Exception.Message)"
+  throw
+}
+
 # Export all functions for use
 Write-Verbose "Exporting all functions..."
 Export-ModuleMember -Function *

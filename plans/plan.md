@@ -45,28 +45,28 @@ winrouter/
 - [ ] **1. Estrutura de Diretórios:** Criar a estrutura de diretórios em `src/` com as subpastas: `core`, `network`, `nat`, `portforward`, `docker`.
 - [ ] **2. Módulo Principal:** Criar o arquivo `WinRouter.psm1` em `src/` que fará o dot-source de todos os arquivos `.ps1` nas subpastas.
 - [ ] **3. Módulos Core:**
-    - [ ] Criar `Logger.ps1` com as funções `Write-Log` and `Write-LogCmd`.
-    - [ ] Criar `Elevation.ps1` com a lógica de auto-elevação e checagens de administrador.
+  - [ ] Criar `Logger.ps1` com as funções `Write-Log` and `Write-LogCmd`.
+  - [ ] Criar `Elevation.ps1` com a lógica de auto-elevação e checagens de administrador.
 - [ ] **4. Módulos de Rede:**
-    - [ ] Criar `Get-Interfaces.ps1` para análise e relatório das interfaces.
-    - [ ] Criar `Set-StaticIP.ps1` para configuração de IP estático.
-    - [ ] Criar `Remove-StaticIP.ps1` para remoção de IP.
+  - [ ] Criar `Get-Interfaces.ps1` para análise e relatório das interfaces.
+  - [ ] Criar `Set-StaticIP.ps1` para configuração de IP estático.
+  - [ ] Criar `Remove-StaticIP.ps1` para remoção de IP.
 - [ ] **5. Módulos NAT:**
-    - [ ] Criar `Get-NatStatus.ps1` para listar as regras de NAT e o status do `IPForwarding`.
-    - [ ] Criar `New-NatRule.ps1` para a criação de regras `NetNat`.
-    - [ ] Criar `Remove-NatRule.ps1` para a remoção de regras `NetNat`.
+  - [ ] Criar `Get-NatStatus.ps1` para listar as regras de NAT e o status do `IPForwarding`.
+  - [ ] Criar `New-NatRule.ps1` para a criação de regras `NetNat`.
+  - [ ] Criar `Remove-NatRule.ps1` para a remoção de regras `NetNat`.
 - [ ] **6. Módulos de Port Forwarding:**
-    - [ ] Criar `New-PortForward.ps1` para adicionar regras de `portproxy`.
-    - [ ] Criar `Get-PortForward.ps1` para listar as regras de `portproxy`.
-    - [ ] Criar `Remove-PortForward.ps1` para remover as regras de `portproxy`.
+  - [ ] Criar `New-PortForward.ps1` para adicionar regras de `portproxy`.
+  - [ ] Criar `Get-PortForward.ps1` para listar as regras de `portproxy`.
+  - [ ] Criar `Remove-PortForward.ps1` para remover as regras de `portproxy`.
 - [ ] **7. Módulos Docker:**
-    - [ ] Criar `Get-DockerNetworks.ps1` para listar as redes `bridge` do Docker.
-    - [ ] Criar `New-DockerNat.ps1` para adicionar NAT para as redes Docker.
+  - [ ] Criar `Get-DockerNetworks.ps1` para listar as redes `bridge` do Docker.
+  - [ ] Criar `New-DockerNat.ps1` para adicionar NAT para as redes Docker.
 - [ ] **8. Ponto de Entrada:** Criar o `start-network.ps1` no diretório raiz com:
-    - [ ] Lógica de auto-elevação.
-    - [ ] Carregamento do módulo (`Import-Module src\WinRouter.psm1`).
-    - [ ] Menu principal de interface.
-    - [ ] Despacho de função baseado na seleção do usuário.
+  - [ ] Lógica de auto-elevação.
+  - [ ] Carregamento do módulo (`Import-Module src\WinRouter.psm1`).
+  - [ ] Menu principal de interface.
+  - [ ] Despacho de função baseado na seleção do usuário.
 - [ ] **9. Documentação:** Atualizar o `README.md` para documentar a nova estrutura e uso.
 - [ ] **10. Testes:** Testar a funcionalidade para garantir que corresponde ao script original.
 
@@ -77,6 +77,34 @@ winrouter/
 - Functions can be tested in isolation by dot-sourcing the specific file
 - Clear separation of concerns: logging, elevation, network, NAT, portforward, Docker
 - Follows PowerShell best practices for modular scripting
+
+## System Information and IPv4 Configuration Notes
+
+### System Information:
+
+- **Windows**: Windows 1 with PowerShell
+- **Focus**: IPv4-only configuration (no IPv6 support)
+- **Privileges**: Running with administrator privileges
+- **Issues**: NAT rule creation/removal failures due to IPv6 compatibility issues
+
+### IPv4 Configuration Requirements:
+
+- Implement IPv4-only mode with enhanced error handling
+- Add fallback NAT creation methods for IPv6 failures
+- Include comprehensive error handling for IPv6 compatibility issues
+- Provide clear error messages for IPv6-related failures
+
+### Troubleshooting Guidelines:
+
+1. **IPv6 Support Error**: "IPV6 sem suporte" occurs during NAT creation
+2. **Remove-NetNat Operation Error**: "Não há suporte à operação solicitada" during NAT removal
+3. **Root Cause**: IPv6 compatibility issues in Windows NAT implementation
+4. **Solution**: Implement IPv4-only mode with enhanced error handling
+
+### For more information, see:
+
+- `src/nat/Remove-NatRule.ps1`: System information and troubleshooting guidelines
+- `docs/TROUBLESHOOTING.md`: Comprehensive troubleshooting guide
 
 ## Next Steps
 

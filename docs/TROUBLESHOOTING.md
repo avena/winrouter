@@ -264,7 +264,7 @@ Write-Host "NAT Rules: $($natRules.Count)"
    Get-NetRoute | Format-Table -AutoSize
 
    # Check for conflicting routes
-   Get-NetRoute | Where-Object {$_.DestinationPrefix -like "192.168.*"}
+   Get-NetRoute | Where-Object {$_.DestinationPrefix -like "192.168.*""}
    ```
 
 ### 4. NAT and Port Forwarding Issues
@@ -432,6 +432,7 @@ Write-Host "NAT Rules: $($natRules.Count)"
    ```
 
 3. **Manual Logging:**
+
    ```powershell
    # Add manual logging to troubleshoot
    function Write-DebugLog {
@@ -448,6 +449,60 @@ Write-Host "NAT Rules: $($natRules.Count)"
    }
    ```
 
+## IPv6 Compatibility Issues
+
+### Overview
+
+WinRouter may encounter IPv6 compatibility issues on certain Windows systems, particularly Windows 1 with PowerShell. These issues can manifest as errors during NAT rule creation and removal.
+
+### Common IPv6-Related Errors
+
+#### 1. IPv6 Support Error
+
+**Error Message**: "IPV6 sem suporte" (IPv6 not supported)
+**Cause**: The system is trying to use IPv6 functionality that isn't available or supported
+**Solution**: Implement IPv4-only mode with enhanced error handling
+
+#### 2. Remove-NetNat Operation Error
+
+**Error Message**: "Não há suporte à operação solicitada" (Operation not supported)
+**Cause**: IPv6 compatibility issues preventing NAT rule removal
+**Solution**: Use IPv4-only NAT rules and enhanced fallback mechanisms
+
+### Root Cause Analysis
+
+The errors are caused by IPv6 compatibility issues in the Windows NAT implementation. The code is attempting to use IPv4 NAT rules but the underlying system is trying to use IPv6 functionality, causing both creation and removal operations to fail.
+
+### System Information
+
+- **Windows**: Windows 1 with PowerShell
+- **Focus**: IPv4-only configuration (no IPv6 support)
+- **Privileges**: Running with administrator privileges
+- **Issues**: NAT rule creation/removal failures due to IPv6 compatibility issues
+
+### IPv4 Configuration Requirements
+
+To resolve IPv6 compatibility issues, implement the following:
+
+1. **IPv4-Only Mode**: Configure WinRouter to use only IPv4 NAT rules
+2. **Enhanced Error Handling**: Add comprehensive error handling for IPv6 failures
+3. **Fallback Mechanisms**: Implement fallback NAT creation methods when IPv6 fails
+4. **Clear Error Messages**: Provide clear error messages for IPv6-related failures
+
+### Troubleshooting Guidelines
+
+1. **Verify IPv6 Support**: Check if IPv6 is supported on the system
+2. **Use IPv4-Only Configuration**: Configure WinRouter to use only IPv4 NAT rules
+3. **Check Network Configuration**: Ensure network interfaces are properly configured for IPv4
+4. **Test Connectivity**: Verify internet sharing works correctly with IPv4-only configuration
+5. **Monitor Logs**: Check logs for IPv6-related errors and warnings
+
+### For more information, see:
+
+- `src/nat/Remove-NatRule.ps1`: System information and troubleshooting guidelines
+- `plans/plan.md`: Detailed implementation plan
+- `src/nat/New-NatRule.ps1`: IPv4-only NAT creation implementation
+
 ## Advanced Troubleshooting
 
 ### 1. System-Level Diagnostics
@@ -455,21 +510,21 @@ Write-Host "NAT Rules: $($natRules.Count)"
 ```powershell
 # Collect comprehensive system information
 function Get-WinRouterDiagnostics {
-    Write-Host "=== System Information ==="
+    Write-Host "=== System Information ===" -ForegroundColor Green
     Get-ComputerInfo | Select-Object OSName, OSVersion, OSArchitecture, CsManufacturer, CsModel
 
-    Write-Host "`n=== Network Configuration ==="
+    Write-Host "`n=== Network Configuration ===" -ForegroundColor Green
     Get-NetAdapter | Format-Table -AutoSize
     Get-NetIPConfiguration | Format-Table -AutoSize
 
-    Write-Host "`n=== NAT Configuration ==="
+    Write-Host "`n=== NAT Configuration ===" -ForegroundColor Green
     Get-NetNat | Format-Table -AutoSize
     Get-NetNatExternalAddress | Format-Table -AutoSize
 
-    Write-Host "`n=== Firewall Status ==="
+    Write-Host "`n=== Firewall Status ===" -ForegroundColor Green
     Get-NetFirewallProfile | Format-Table -AutoSize
 
-    Write-Host "`n=== Event Logs (Recent Network Events) ==="
+    Write-Host "`n=== Event Logs (Recent Network Events) ===" -ForegroundColor Green
     Get-WinEvent -LogName "System" -MaxEvents 10 | Where-Object {$_.Message -match "network|adapter|ip"} | Format-Table TimeCreated, Id, Message -AutoSize
 }
 
@@ -486,7 +541,7 @@ function Test-WinRouterConnectivity {
         [int]$TargetPort = 53
     )
 
-    Write-Host "Testing connectivity to $TargetIP:$TargetPort"
+    Write-Host "Testing connectivity to $TargetIP:$TargetPort" -ForegroundColor Green
 
     # Test basic connectivity
     $pingResult = Test-Connection -ComputerName $TargetIP -Count 3 -Quiet
@@ -499,9 +554,9 @@ function Test-WinRouterConnectivity {
     # Test DNS resolution
     try {
         $dnsResult = Resolve-DnsName "google.com"
-        Write-Host "DNS resolution: SUCCESS"
+        Write-Host "DNS resolution: SUCCESS" -ForegroundColor Green
     } catch {
-        Write-Host "DNS resolution: FAILED - $($_.Exception.Message)"
+        Write-Host "DNS resolution: FAILED - $($_.Exception.Message)" -ForegroundColor Red
     }
 }
 
@@ -513,7 +568,7 @@ Test-WinRouterConnectivity
 ```powershell
 # Monitor system resources during WinRouter operations
 function Start-WinRouterMonitoring {
-    Write-Host "Starting resource monitoring..."
+    Write-Host "Starting resource monitoring..." -ForegroundColor Green
 
     # Monitor CPU and memory
     $monitorScript = {

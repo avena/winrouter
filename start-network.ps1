@@ -34,7 +34,8 @@ if ($nats.Count -gt 0) {
     foreach ($n in $nats) {
         Write-Host "    * $($n.Name): $($n.InternalIPInterfaceAddressPrefix)" -ForegroundColor Green
     }
-} else {
+}
+else {
     Write-Host ">>> SYSTEM NAT STATUS: INACTIVE (No NAT rules active)" -ForegroundColor Yellow
 }
 Write-Host ""
@@ -124,16 +125,18 @@ switch ($natChoice) {
             foreach ($rule in $natRules) {
                 Remove-WinRouterNatRule -NatRule $rule
             }
-        } else {
+        }
+        else {
             Write-Host "Active NAT rules:"
-            for ($i=0; $i -lt $natRules.Count; $i++) {
+            for ($i = 0; $i -lt $natRules.Count; $i++) {
                 Write-Host "$($i+1)) $($natRules[$i].Name) ($($natRules[$i].InternalIPInterfaceAddressPrefix))"
             }
             $ruleIdxStr = Read-Host "Number to remove (or Enter to cancel)"
             if ([int]::TryParse($ruleIdxStr, [ref]$ruleIdx) -and $ruleIdx -ge 1 -and $ruleIdx -le $natRules.Count) {
                 $ruleToRemove = $natRules[[int]$ruleIdx - 1]
                 Remove-WinRouterNatRule -NatRule $ruleToRemove
-            } else {
+            }
+            else {
                 Write-Host "Invalid selection or cancellation. No rules removed." -ForegroundColor Gray
             }
         }
@@ -152,10 +155,12 @@ Write-Host "WAN Interface : $($wanInterface.Name)"
 Write-Host "LAN Interface : $($lanInterface.Name) (IP: $( (Get-NetIPAddress -InterfaceIndex $lanInterface.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1).IPAddress ))"
 Write-Host "IP Forwarding : $(if (Get-IPForwardingStatus) { 'ENABLED' } else { 'DISABLED' })"
 
+
 $finalNats = Get-WinRouterNatRules
 if ($finalNats) {
     Write-Host "Active NAT    : $($finalNats.Name -join ', ')"
-} else {
+}
+else {
     Write-Host "Active NAT    : NONE"
 }
 
