@@ -1,71 +1,10 @@
-# WinRouter
+# WinRouter Documentation
 
-[![PowerShell](https://img.shields.io/badge/PowerShell-5.1+-blue.svg)](https://docs.microsoft.com/en-us/powershell/)
-[![Windows](https://img.shields.io/badge/Windows-10%20%7C%2011-green.svg)](https://www.microsoft.com/windows)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+## Overview
 
-A PowerShell-based Windows router configuration tool designed to simplify network setup, NAT configuration, port forwarding, and Docker network integration.
+WinRouter is a PowerShell-based Windows router configuration tool designed to simplify network setup, NAT configuration, port forwarding, and Docker network integration. This project has been refactored into a modular structure for better maintainability and extensibility.
 
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Windows 10/11 with PowerShell 5.1 or later
-- Administrator privileges (required for network configuration)
-- Docker Desktop (optional, for Docker network integration)
-
-### Installation
-
-1. **Clone the repository:**
-
-   ```powershell
-   git clone <repository-url>
-   cd winrouter
-   ```
-
-2. **Run the main script:**
-
-   ```powershell
-   .\start-network.ps1
-   ```
-
-   The script will automatically elevate to administrator privileges if needed.
-
-### Usage
-
-WinRouter provides an interactive menu system:
-
-```
-WinRouter - Windows Router Configuration Tool
-============================================
-
-1. Network Interface Management
-   - View available interfaces
-   - Configure static IP addresses
-   - Remove IP configurations
-
-2. NAT Configuration
-   - View current NAT rules
-   - Create new NAT rules
-   - Remove existing NAT rules
-
-3. Port Forwarding
-   - View port forwarding rules
-   - Add new port forwarding rules
-   - Remove port forwarding rules
-
-4. Docker Integration
-   - View Docker networks
-   - Configure NAT for Docker networks
-
-5. System Information
-   - View system network status
-   - Check IP forwarding status
-
-0. Exit
-```
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 winrouter/
@@ -104,19 +43,73 @@ winrouter/
 │       └── New-DockerNat.ps1
 │
 ├── logs/                      # Runtime log files (auto-generated)
-├── docs/                      # Documentation
-│   ├── README.md             # Comprehensive user documentation
-│   ├── DEVELOPMENT.md        # Developer guidelines
-│   ├── TROUBLESHOOTING.md    # Troubleshooting guide
-│   └── FAQ.md                # Frequently asked questions
 └── old-base-script/           # Legacy scripts (for reference)
 ```
 
-## 🔧 PowerShell Module Architecture
+## Quick Start
 
-### Module Structure (.psm1 as Orchestrator)
+### Prerequisites
 
-WinRouter uses a multi-file PowerShell module approach where:
+- Windows 10/11 with PowerShell 5.1 or later
+- Administrator privileges (required for network configuration)
+- Docker Desktop (optional, for Docker network integration)
+
+### Installation
+
+1. Clone the repository:
+
+   ```powershell
+   git clone <repository-url>
+   cd winrouter
+   ```
+
+2. Run the main script:
+
+   ```powershell
+   .\start-network.ps1
+   ```
+
+   The script will automatically elevate to administrator privileges if needed.
+
+### Usage
+
+The main script provides an interactive menu system:
+
+```
+WinRouter - Windows Router Configuration Tool
+============================================
+
+1. Network Interface Management
+   - View available interfaces
+   - Configure static IP addresses
+   - Remove IP configurations
+
+2. NAT Configuration
+   - View current NAT rules
+   - Create new NAT rules
+   - Remove existing NAT rules
+
+3. Port Forwarding
+   - View port forwarding rules
+   - Add new port forwarding rules
+   - Remove port forwarding rules
+
+4. Docker Integration
+   - View Docker networks
+   - Configure NAT for Docker networks
+
+5. System Information
+   - View system network status
+   - Check IP forwarding status
+
+0. Exit
+```
+
+## Module Architecture
+
+### PowerShell Module (.psm1) Structure
+
+The project uses a multi-file PowerShell module approach where:
 
 - **WinRouter.psm1**: Main module orchestrator that dot-sources all component modules
 - **Individual .ps1 files**: Each contains functions for a specific domain
@@ -165,7 +158,7 @@ Handles privilege escalation:
 - `Get-DockerNetworks`: List Docker bridge networks
 - `New-DockerNat`: Configure NAT for Docker networks
 
-## 🛠️ Development
+## Development Guidelines
 
 ### Adding New Functionality
 
@@ -194,17 +187,21 @@ Import-Module "src\WinRouter.psm1"
 Get-Command -Module WinRouter  # Should list all exported functions
 ```
 
-### Code Quality
+### Error Handling
 
-WinRouter follows PowerShell best practices:
+All modules should include proper error handling:
 
-- PowerShell verb-noun naming convention
-- Comprehensive help documentation for all functions
-- Input validation and error handling
-- Consistent code formatting and indentation
-- Modular design with single responsibility principle
+```powershell
+try {
+    # Module loading
+    . "$PSScriptRoot\core\Logger.ps1"
+} catch {
+    Write-Error "Failed to load Logger module: $($_.Exception.Message)"
+    throw
+}
+```
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -225,20 +222,35 @@ WinRouter follows PowerShell best practices:
 - Check if IP addresses are already in use
 - Ensure no conflicting NAT rules exist
 
-For detailed troubleshooting, see [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md).
+### Log Files
 
-## 📚 Documentation
+All operations are logged to the `logs/` directory:
 
-- **[User Guide](docs/README.md)**: Comprehensive user documentation
-- **[Development Guide](docs/DEVELOPMENT.md)**: Developer guidelines and best practices
-- **[Troubleshooting](docs/TROUBLESHOOTING.md)**: Common issues and solutions
-- **[FAQ](docs/FAQ.md)**: Frequently asked questions
+- `winrouter.log`: Main application log
+- `network.log`: Network-specific operations
+- `nat.log`: NAT rule operations
+- `docker.log`: Docker integration operations
 
-## 🤝 Contributing
+### Debug Mode
 
-We welcome contributions! Please see our [Contribution Guidelines](docs/DEVELOPMENT.md#contributing) for details.
+Enable debug mode by setting the environment variable:
 
-### Development Workflow
+```powershell
+$env:WINROUTER_DEBUG = $true
+.\start-network.ps1
+```
+
+## Contributing
+
+### Code Style
+
+- Use PowerShell verb-noun naming convention
+- Follow the existing module structure
+- Include proper error handling
+- Add comprehensive comments for complex functions
+- Use consistent indentation (4 spaces)
+
+### Git Workflow
 
 1. Create feature branch from `refactor/modular-structure`
 2. Implement changes following the modular structure
@@ -246,35 +258,25 @@ We welcome contributions! Please see our [Contribution Guidelines](docs/DEVELOPM
 4. Create pull request with detailed description
 5. Follow the GitFlow strategy outlined in `plans/gitflow.md`
 
-## 🔒 Security
+### Testing Requirements
 
-WinRouter implements several security measures:
+- All new modules must be tested individually
+- Integration testing required for module loading
+- Verify backward compatibility with original script
+- Test on different Windows versions when possible
+
+## Security Considerations
 
 - All network configuration requires administrator privileges
 - Input validation is performed on all user inputs
 - Sensitive operations are logged for audit purposes
 - Docker integration follows Docker security best practices
 
-## 📋 Version History
+## License
 
-### v1.0.0
+This project is licensed under the MIT License. See the LICENSE file for details.
 
-- Initial modular refactoring
-- PowerShell module structure implementation
-- Core functionality preservation
-- Comprehensive documentation
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- PowerShell community for best practices and guidance
-- Windows networking team for robust networking APIs
-- Docker team for excellent containerization platform
-
-## 📞 Support
+## Support
 
 For issues, questions, or contributions:
 
@@ -283,6 +285,27 @@ For issues, questions, or contributions:
 3. Include relevant log files when reporting problems
 4. Provide your Windows version and PowerShell version
 
----
+## Version History
 
-**Note**: This project is under active development. Please report any issues you encounter!
+### v1.0.0
+
+- Initial modular refactoring
+- PowerShell module structure implementation
+- Core functionality preservation
+- Documentation updates
+
+## Dependencies
+
+- **PowerShell 5.1+**: Required for all functionality
+- **Windows Admin Center**: Optional for GUI management
+- **Docker Desktop**: Optional for Docker network integration
+- **Windows Admin Tools**: Required for NAT and port forwarding
+
+## Performance Notes
+
+- Module loading is optimized for fast startup
+- Network operations are performed asynchronously when possible
+- Logging is configurable to reduce overhead
+- Memory usage is monitored and optimized
+
+For more detailed technical information, see the `GEMINI.md` file and the individual module documentation.
