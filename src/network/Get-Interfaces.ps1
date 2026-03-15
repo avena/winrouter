@@ -28,7 +28,16 @@ function Get-WinRouterInterfaces {
             $prefix = ($_.InternalIPInterfaceAddressPrefix -replace '/\d+$', '') -replace '\.\d+$', ''
             $ips.IPAddress | Where-Object { $_ -like "$prefix.*" }
         }
-        $natName = if ($natAssociada) { $natAssociada.Name -join ', ' } else { $null }
+        
+        # Enhanced NAT Status display
+        $natStatus = if ($natAssociada) { 
+            "YES (" + ($natAssociada.Name -join ', ') + ")" 
+        } else { 
+            "NONE" 
+        }
+
+        # Uppercase Status display
+        $statusDisplay = $adapter.Status.ToUpper()
 
         $obj = [PSCustomObject]@{
             Selection      = [char]$letterCode
@@ -36,9 +45,9 @@ function Get-WinRouterInterfaces {
             InterfaceIndex = $adapter.InterfaceIndex
             MAC            = $adapter.MacAddress
             IP             = $ipAddress
-            Status         = $adapter.Status
+            Status         = $statusDisplay
             GatewayStatus  = $gatewayStatus
-            NAT            = $natName
+            NAT            = $natStatus
         }
         
         $results += $obj

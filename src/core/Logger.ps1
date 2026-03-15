@@ -105,4 +105,3 @@ function Write-LogObject {
 }
 
 # Exporta as funções
-Export-ModuleMember -Function Write-Log, Write-LogCmd, Write-Section, Write-Step, Write-LogObject

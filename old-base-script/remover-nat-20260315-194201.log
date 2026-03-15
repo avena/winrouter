@@ -1,0 +1,7 @@
+[2026-03-15 19:42:01] [INFO] Iniciando script. Log: C:\Users\adminrandom\Estudos\winrouter\old-base-script\remover-nat-20260315-194201.log
+[2026-03-15 19:42:01] [SUCCESS] Rodando como Admin.
+[2026-03-15 19:42:01] [INFO] Listando regras NAT...
+[2026-03-15 19:42:01] [INFO] Regras encontradas: 1
+[2026-03-15 19:42:01] [INFO] Regra 1: NAT-WinRouter-60 [192.168.60.0/24] Active=False
+[2026-03-15 19:44:45] [INFO] Escolha do usuario: ''
+[2026-03-15 19:44:45] [INFO] Cancelado pelo usuario.
