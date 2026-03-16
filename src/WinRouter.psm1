@@ -1,6 +1,6 @@
-# WinRouter.psm1
+﻿# WinRouter.psm1
 # PowerShell Module Orchestrator
-# 
+#
 # This module serves as the central orchestrator for the WinRouter project.
 # It dot-sources all component modules and exports their functions for use.
 #
@@ -31,17 +31,17 @@ catch {
 # Network modules
 try {
   Write-Verbose "Loading network modules..."
-    
+
   # Network interface management
   . "$PSScriptRoot\network\Get-Interfaces.ps1"
   Write-Verbose "✓ Get-Interfaces module loaded"
-    
+
   . "$PSScriptRoot\network\Set-StaticIP.ps1"
   Write-Verbose "✓ Set-StaticIP module loaded"
-    
+
   . "$PSScriptRoot\network\Remove-StaticIP.ps1"
   Write-Verbose "✓ Remove-StaticIP module loaded"
-    
+
 }
 catch {
   Write-Error "Failed to load network modules: $($_.Exception.Message)"
@@ -51,17 +51,17 @@ catch {
 # NAT modules
 try {
   Write-Verbose "Loading NAT modules..."
-    
+
   # NAT status and management
   . "$PSScriptRoot\nat\Get-NatStatus.ps1"
   Write-Verbose "✓ Get-NatStatus module loaded"
-    
+
   . "$PSScriptRoot\nat\New-NatRule.ps1"
   Write-Verbose "✓ New-NatRule module loaded"
-    
+
   . "$PSScriptRoot\nat\Remove-NatRule.ps1"
   Write-Verbose "✓ Remove-NatRule module loaded"
-    
+
 }
 catch {
   Write-Error "Failed to load NAT modules: $($_.Exception.Message)"
