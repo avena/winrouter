@@ -9,15 +9,19 @@
 # Core modules - loaded first as they provide essential functionality
 try {
   Write-Verbose "Loading core modules..."
-    
+
   # Logger module - provides centralized logging
   . "$PSScriptRoot\core\Logger.ps1"
   Write-Verbose "✓ Logger module loaded"
-    
+
   # Elevation module - handles privilege escalation
   . "$PSScriptRoot\core\Elevation.ps1"
   Write-Verbose "✓ Elevation module loaded"
-    
+
+  # Utils module - NAT naming conventions and helpers
+  . "$PSScriptRoot\core\Utils.ps1"
+  Write-Verbose "✓ Utils module loaded"
+
 }
 catch {
   Write-Error "Failed to load core modules: $($_.Exception.Message)"

@@ -128,6 +128,45 @@ function New-WinRouterNatRule {
 
 ---
 
+### NAT Naming Convention (Convencao de Nomes)
+
+#### Padrao: `WR-NAT-{base}`
+
+```powershell
+# Exemplos:
+#   192.168.50.0/24  → WR-NAT-50
+#   192.168.60.0/24  → WR-NAT-60
+#   192.168.70.0/24  → WR-NAT-70
+```
+
+**Por que `WR-NAT-{base}`:**
+
+- Prefixo `WR-` identifica regra como propriedade do WinRouter
+- Permite filtrar: `Where-Object { $_.Name -match '^WR-NAT-' }`
+- Protege regras externas em fallback nuke
+
+#### Funções Utilitárias
+
+```powershell
+# Gerar nome padrao
+$natName = Get-NatRuleName -NetworkPrefix "192.168.60.0/24"
+# Retorna: "WR-NAT-60"
+
+# Verificar se regra e propria
+Test-IsOwnedNatRule -NatName "WR-NAT-60"      # $true
+Test-IsOwnedNatRule -NatName "NAT-Rede50"     # $false
+```
+
+#### Migracao de Regras Legadas
+
+Regras com nomes antigos (`Rede60`, `NAT-Rede50-DESKTOP-*`) sao:
+
+1. Detectadas pelo prefixo de rede
+2. Reportadas como legadas no log
+3. Substituidas pela nova convencao na proxima criacao
+
+---
+
 ### NAT Implementation Guidelines (Método Validado WinNAT)
 
 #### Pipeline Obrigatório (Ordem Imutável)
@@ -204,6 +243,27 @@ if ($errMsg -match 'IPv6') { throw "Erro de IPv6: $errMsg" }
 & sc.exe config winnat start= disabled
 ```
 
+**❌ Antipadrão 7: Export-ModuleMember em Arquivos .ps1**
+
+```powershell
+# NUNCA FAZER ISSO em src/core/*.ps1 ou src/*/*.ps1
+function Get-Exemplo { }
+Export-ModuleMember -Function Get-Exemplo  # ❌ ERRO!
+```
+
+**Por que é errado:**
+
+- `Export-ModuleMember` só funciona dentro de arquivos `.psm1`
+- Arquivos `.ps1` no WinRouter são carregados via dot-sourcing
+- Causa erro: "The Export-ModuleMember cmdlet can only be called from inside a module"
+
+**Solução correta:**
+
+- Remover `Export-ModuleMember` do arquivo `.ps1`
+- Exportar funções no `WinRouter.psm1` via `Export-ModuleMember -Function *`
+
+**Documentação:** [plans/module-loading-guidelines.md](plans/module-loading-guidelines.md)
+
 #### Contrato das Funções NAT
 
 **New-WinRouterNatRule:**
@@ -233,6 +293,7 @@ Antes de commitar, verifique:
 - [ ] `Start-Sleep` após remoção é ≤ 2 segundos
 - [ ] **NÃO** desabilita WinNAT permanentemente
 - [ ] **NÃO** chama `netsh reset`
+- [ ] **NÃO** existe `Export-ModuleMember` em arquivos `.ps1` (apenas em `.psm1`)
 
 ### Module Organization Principles
 
@@ -300,6 +361,32 @@ Export-ModuleMember -Function Get-Interfaces, Set-StaticIP
 # Export functions and aliases
 Export-ModuleMember -Function * -Alias *
 ```
+
+#### 4. Export-ModuleMember — Regra Importante
+
+**⚠️ NUNCA use `Export-ModuleMember` em arquivos `.ps1`**
+
+```powershell
+# ❌ NUNCA FAZER ISSO em src/core/*.ps1 ou src/*/*.ps1
+function Get-Exemplo { }
+Export-ModuleMember -Function Get-Exemplo  # ❌ ERRO!
+```
+
+**Motivo:** `Export-ModuleMember` só funciona dentro de arquivos `.psm1`. No WinRouter, os arquivos `.ps1` são carregados via dot-sourcing no `WinRouter.psm1`.
+
+**Solução correta:**
+
+```powershell
+# ✅ CORRETO — src/core/Exemplo.ps1
+function Get-Exemplo { }
+# Sem Export-ModuleMember aqui
+
+# ✅ CORRETO — src/WinRouter.psm1
+. "$PSScriptRoot\core\Exemplo.ps1"
+Export-ModuleMember -Function *  # Exporta no módulo principal
+```
+
+**Documentação completa:** [plans/module-loading-guidelines.md](plans/module-loading-guidelines.md)
 
 ### Development Workflow
 

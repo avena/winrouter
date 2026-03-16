@@ -50,9 +50,37 @@ Start-Sleep -Seconds 2
 
 | Arquivo              | Antes       | Depois      | Redução |
 | -------------------- | ----------- | ----------- | ------- |
-| `New-NatRule.ps1`    | ~90 linhas  | ~60 linhas  | 33%     |
-| `Remove-NatRule.ps1` | ~300 linhas | ~80 linhas  | 73%     |
-| `start-network.ps1`  | ~306 linhas | ~289 linhas | 6%      |
+| `New-NatRule.ps1`    | ~90 linhas  | ~75 linhas  | 17%     |
+| `Remove-NatRule.ps1` | ~300 linhas | ~100 linhas | 67%     |
+| `start-network.ps1`  | ~306 linhas | ~294 linhas | 4%      |
+
+### 2.5. Convenção de Nomes: WR-NAT-{base}
+
+**Padronização adotada em 2026-03-15:**
+
+```
+192.168.50.0/24 → WR-NAT-50
+192.168.60.0/24 → WR-NAT-60
+192.168.70.0/24 → WR-NAT-70
+```
+
+**Vantagens:**
+
+- Prefixo `WR-` identifica regras do WinRouter
+- Permite filtrar: `Where-Object { $_.Name -match '^WR-NAT-' }`
+- Protege regras externas em fallback nuke
+- Nome dinâmico baseado apenas na base da rede (sem hostname hardcoded)
+
+**Funções utilitárias:**
+
+```powershell
+# Gerar nome padrao
+$natName = Get-NatRuleName -NetworkPrefix "192.168.60.0/24"
+
+# Verificar se regra e propria
+Test-IsOwnedNatRule -NatName "WR-NAT-60"   # $true
+Test-IsOwnedNatRule -NatName "NAT-Rede50"  # $false
+```
 
 ### 3. IPv6 Explicitamente Não Suportado
 
@@ -199,6 +227,36 @@ catch {
 
 ---
 
+### Antipadrão 8: Nomes Hardcoded de Regras NAT
+
+```powershell
+# ❌ NUNCA FAZER ISSO
+$natName = "NAT-WinRouter-$currentBase"
+$natName = "Rede60"
+$natName = "NAT-Rede50-$env:COMPUTERNAME"
+```
+
+**Por que é errado:**
+
+- Três padrões diferentes no mesmo projeto causam inconsistência
+- Script não consegue identificar quais regras ele mesmo criou
+- Nomes com hostname hardcoded não são gerenciáveis
+- Impossível distinguir regras próprias de externas
+
+**Solução correta:**
+
+```powershell
+# ✅ Use funcao utilitaria para gerar nome padrao
+$natName = Get-NatRuleName -NetworkPrefix "192.168.60.0/24"
+# Retorna: "WR-NAT-60"
+
+# Verificar se regra e propria
+Test-IsOwnedNatRule -NatName "WR-NAT-60"   # $true
+Test-IsOwnedNatRule -NatName "NAT-Rede50"  # $false
+```
+
+---
+
 ### Antipadrão 4: Classificação de Erro IPv6
 
 ```powershell
@@ -323,6 +381,7 @@ Antes de considerar uma implementação como correta:
 
 - [ ] `Get-NetNat` retorna exatamente 1 regra com prefixo correto
 - [ ] Regra tem `Active = True`
+- [ ] Nome da regra segue padrao `WR-NAT-{base}` (ex: WR-NAT-60)
 - [ ] **NÃO** existe lógica de filtro por prefixo na remoção
 - [ ] **NÃO** existe loop de retry em volta de `New-NetNat`
 - [ ] **NÃO** existe classificação de erro de IPv6 como caso especial
@@ -331,17 +390,42 @@ Antes de considerar uma implementação como correta:
 - [ ] `Start-Sleep` após remoção é ≤ 2 segundos
 - [ ] **NÃO** desabilita serviço WinNAT permanentemente
 - [ ] **NÃO** chama `netsh reset` como parte do fluxo normal
+- [ ] **NÃO** existe nome hardcoded de regra NAT (ex: "Rede60", "NAT-WinRouter-\*")
 
 ---
 
 ## Arquivos Modificados
 
-| Arquivo                         | Mudança                                     |
-| ------------------------------- | ------------------------------------------- |
-| `src/nat/New-NatRule.ps1`       | Mantido correto (já seguia método validado) |
-| `src/nat/Remove-NatRule.ps1`    | Simplificado de ~300 para ~80 linhas        |
-| `start-network.ps1`             | Removido código de compatibilidade IPv6     |
-| `src/nat/Enable-IPv6ForNat.ps1` | **Deletado** (IPv6 não suportado)           |
+| Arquivo                              | Mudança                                                                              |
+| ------------------------------------ | ------------------------------------------------------------------------------------ |
+| `src/core/Utils.ps1`                 | **NOVO** - Funcoes Get-NatRuleName, Test-IsOwnedNatRule                              |
+| `src/nat/New-NatRule.ps1`            | Adicionada migracao de regras legadas                                                |
+| `src/nat/Remove-NatRule.ps1`         | Simplificado + filtro de protecao para regras externas                               |
+| `src/nat/Get-NatStatus.ps1`          | Adicionada funcao Get-WinRouterNatStatusDetailed com indicador [WinRouter]/[EXTERNA] |
+| `start-network.ps1`                  | Usa Get-NatRuleName para gerar nome dinamicamente                                    |
+| `src/WinRouter.psm1`                 | Carrega Utils.ps1                                                                    |
+| `docs/NAT_FIX_SUMMARY.md`            | Adicionada convencao de nomes e Antipadrao 8                                         |
+| `plans/nat-method.md`                | Adicionada secao de convencao de nomes                                               |
+| `GEMINI.md`                          | Adicionada secao NAT Naming Convention                                               |
+| `plans/module-loading-guidelines.md` | **NOVO** - Documentacao sobre Export-ModuleMember                                    |
+
+---
+
+## Historico de Correcoes
+
+### 2026-03-16 — Correcao: Export-ModuleMember em Utils.ps1
+
+**Erro:** `src/core/Utils.ps1` continha `Export-ModuleMember`, causando erro ao carregar.
+
+```
+Export-ModuleMember: The Export-ModuleMember cmdlet can only be called from inside a module.
+```
+
+**Solucao:** Removido `Export-ModuleMember` do arquivo `.ps1`. Funcoes sao exportadas pelo `WinRouter.psm1`.
+
+**Licao:** Arquivos `.ps1` carregados via dot-source **NUNCA** devem conter `Export-ModuleMember`.
+
+**Documentacao:** [plans/module-loading-guidelines.md](plans/module-loading-guidelines.md)
 
 ---
 
@@ -356,6 +440,8 @@ Antes de considerar uma implementação como correta:
 5. **Nunca** classifique erros de IPv6 separadamente
 6. **Único caso especial:** `StopPending` → throw com msg de reboot
 7. **Sempre** use `Start-Sleep -Seconds 2` após remoção
+8. **Sempre** use `Get-NatRuleName` para gerar nome da regra
+9. **Sempre** use `Test-IsOwnedNatRule` para proteger regras externas
 
 ### Ao revisar código NAT:
 
@@ -367,6 +453,8 @@ Verifique se **NÃO** existe:
 - [ ] `if ($errMsg -match 'IPv6')` como caso especial
 - [ ] `netsh int ip reset` ou `netsh winsock reset`
 - [ ] `sc config winnat start=disabled`
+- [ ] Nome hardcoded de regra NAT (ex: "Rede60", "NAT-WinRouter-\*")
+- [ ] `Export-ModuleMember` em arquivos .ps1 (apenas em .psm1)
 
 ---
 

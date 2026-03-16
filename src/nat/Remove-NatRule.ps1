@@ -58,15 +58,30 @@ function Remove-WinRouterNatRule {
     # ========================================================================
     try {
         $existing = Get-NetNat -ErrorAction SilentlyContinue
-        
+
         if ($existing) {
             $count = @($existing).Count
-            Write-Log "Removendo $count regra(s) NAT existente(s)..." "INFO"
             
-            $existing | Remove-NetNat -Confirm:$false -ErrorAction Stop
+            # Filtro de protecao para regras externas
+            $ownedRules = $existing | Where-Object { Test-IsOwnedNatRule $_.Name }
+            $externalRules = $existing | Where-Object { -not (Test-IsOwnedNatRule $_.Name) }
             
-            Start-Sleep -Seconds 2
-            Write-Log "Regras NAT removidas com sucesso." "SUCCESS"
+            # Reportar regras externas (nao serao removidas)
+            if ($externalRules.Count -gt 0) {
+                $externalNames = ($externalRules | Select-Object -ExpandProperty Name) -join ', '
+                Write-Log "Regras externas detectadas (nao serao removidas): $externalNames" "WARN"
+            }
+            
+            # Remove apenas regras próprias do WinRouter
+            if ($ownedRules.Count -gt 0) {
+                Write-Log "Removendo $($ownedRules.Count) regra(s) NAT propria(s)..." "INFO"
+                $ownedRules | Remove-NetNat -Confirm:$false -ErrorAction Stop
+                Start-Sleep -Seconds 2
+                Write-Log "Regras NAT proprias removidas com sucesso." "SUCCESS"
+            }
+            else {
+                Write-Log "Nenhuma regra NAT propria para remover." "INFO"
+            }
         }
         else {
             Write-Log "Nenhuma regra NAT para remover." "INFO"

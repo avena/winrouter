@@ -13,6 +13,44 @@ Este documento especifica o método **validado em produção** para configuraç�
 
 ---
 
+## Convenção de Nomes (Naming Convention)
+
+### Padrão: `WR-NAT-{base}`
+
+```
+192.168.50.0/24 → WR-NAT-50
+192.168.60.0/24 → WR-NAT-60
+192.168.70.0/24 → WR-NAT-70
+```
+
+**Por que `WR-NAT-{base}`:**
+
+- Prefixo `WR-` identifica regra como propriedade do WinRouter
+- Permite filtrar regras próprias: `Where-Object { $_.Name -match '^WR-NAT-' }`
+- Protege regras externas em operações de fallback nuke
+
+### Funções de Nomenclatura
+
+```powershell
+# Gerar nome padrão
+$natName = Get-NatRuleName -NetworkPrefix "192.168.60.0/24"
+# Retorna: "WR-NAT-60"
+
+# Verificar se regra é própria
+Test-IsOwnedNatRule -NatName "WR-NAT-60"   # $true
+Test-IsOwnedNatRule -NatName "NAT-Rede50"  # $false
+```
+
+### Migração de Regras Legadas
+
+Regras com nomes antigos (`Rede60`, `NAT-Rede50-DESKTOP-*`) são:
+
+1. Detectadas pelo prefixo de rede (independente do nome)
+2. Reportadas como legadas no log
+3. Substituídas pela nova convenção na próxima criação
+
+---
+
 ## Pipeline de Componentes (Ordem Obrigatória)
 
 ```
@@ -119,19 +157,23 @@ Valores maiores indicam problema de design.
 ### New-WinRouterNatRule
 
 **Entrada:**
+
 - `Name`: string — identificador da regra NAT
 - `InternalIPInterfaceAddressPrefix`: string CIDR — ex: `"192.168.50.0/24"`
 
 **Saída:**
+
 - `$true` — regra criada com sucesso
 - `throw` — qualquer falha, com mensagem descritiva
 
 **Efeitos Colaterais Esperados:**
+
 - Serviço WinNAT ativo e configurado como `Automatic`
 - Todas regras NetNat anteriores removidas
 - Nova regra NetNat ativa para o prefixo informado
 
 **Efeitos Colaterais Proibidos:**
+
 - ❌ Não deve configurar IP em nenhuma interface
 - ❌ Não deve modificar rotas
 - ❌ Não deve alterar firewall
@@ -141,17 +183,21 @@ Valores maiores indicam problema de design.
 ### Remove-WinRouterNatRule
 
 **Entrada:**
+
 - `NatRule`: psobject — objeto da regra NAT (vindo de `Get-NetNat`)
 
 **Saída:**
+
 - void (sem retorno)
 - `throw` apenas se estado `StopPending` detectado
 
 **Efeitos Colaterais Esperados:**
+
 - Serviço WinNAT ativo
 - Todas regras NetNat removidas
 
 **Efeitos Colaterais Proibidos:**
+
 - ❌ Não deve desabilitar serviço WinNAT permanentemente
 - ❌ Não deve chamar `netsh reset`
 - ❌ Não deve modificar registro (IPEnableRouter)
@@ -283,6 +329,7 @@ if ($removeFailed) {
 **Causa:** Driver kernel WinNAT travado
 
 **Solução:**
+
 ```powershell
 Restart-Computer -Force
 ```
@@ -294,6 +341,7 @@ Restart-Computer -Force
 **Causa:** Remoção anterior incompleta
 
 **Solução:**
+
 ```powershell
 # Execute remoção novamente
 Get-NetNat | Remove-NetNat -Confirm:$false
@@ -309,6 +357,7 @@ Restart-Computer -Force
 **Causa:** WinNAT não estava ativo durante criação
 
 **Solução:**
+
 ```powershell
 # Garanta WinNAT ativo antes de criar
 Set-Service WinNAT -StartupType Automatic

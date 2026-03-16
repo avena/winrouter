@@ -36,6 +36,21 @@ function New-WinRouterNatRule {
         # Continue anyway, let New-NetNat fail if it must
     }
 
+    # PASSO 2.5: Migracao de regras legadas (nome antigo → novo padrao WR-NAT-{base})
+    # Busca regra legada pelo PREFIXO (qualquer nome) antes de criar com novo nome
+    $expectedName = Get-NatRuleName -NetworkPrefix $InternalIPInterfaceAddressPrefix
+    if ($Name -ne $expectedName) {
+        Write-Log "Aviso: Nome fornecido '$Name' difere do padrao '$expectedName'." "WARN"
+    }
+    
+    $legacy = Get-NetNat -ErrorAction SilentlyContinue |
+    Where-Object { $_.InternalIPInterfaceAddressPrefix -eq $InternalIPInterfaceAddressPrefix }
+    
+    if ($legacy -and $legacy.Name -ne $expectedName) {
+        Write-Log "Regra legada '$($legacy.Name)' detectada para $InternalIPInterfaceAddressPrefix." "WARN"
+        Write-Log "Padrao atual: $expectedName (regra sera criada com este nome)." "INFO"
+    }
+
     # PASSO 3: Criar regra NAT
     try {
         New-NetNat -Name $Name `
