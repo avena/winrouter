@@ -84,17 +84,20 @@ Export-ModuleMember -Function *
 
 #### Rationale for IPv6 Exclusion
 
-- **Compatibility Issues**: IPv6 support varies significantly between Windows versions
-- **Common Failures**: "IPV6 sem suporte" errors are frequent on many systems
-- **Limited Practical Use**: Most users only need IPv4 NAT functionality
-- **Complexity Reduction**: Removing IPv6 simplifies code and reduces failure points
+- **Conceptual Design**: IPv6 was designed with a massive address space (2^128) to provide every device with a **Global Unicast Address (GUA)**, effectively eliminating the need for NAT.
+- **NAT as an IPv4 Workaround**: NAT is a temporary solution for IPv4 address exhaustion (~4.3B addresses). IPv6 allows native end-to-end communication.
+- **Compatibility Issues**: WinNAT implementation of IPv6 varies between Windows versions and often triggers "IPV6 sem suporte" errors when applying IPv4 NAT logic.
+- **Modern Alternatives**: For WSL 2, the **Mirrored Mode** (WSL version >= 2.0.0) provides native IPv6 support without the need for manual port forwarding or NAT.
+- **Firewall Consideration**: Without NAT's "implicit protection," IPv6 requires explicit firewall rules (`New-NetFirewallRule`) for each exposed service.
+- **Complexity Reduction**: Removing IPv6 simplifies code and reduces failure points in the WinNAT driver.
 
 #### Development Guidelines
 
-1. **NAT Functions**: All NAT-related functions must be IPv4-only
-2. **No IPv6 Parameters**: Do not add IPv6-related parameters to NAT functions
-3. **Error Handling**: Focus on system compatibility rather than IPv6 fallbacks
-4. **Documentation**: Clearly state IPv6 is not supported in function help
+1. **NAT Functions**: All NAT-related functions must be IPv4-only.
+2. **No IPv6 Parameters**: Do not add IPv6-related parameters to NAT functions.
+3. **Explicit Firewalls**: When exposing services (especially in WSL 2 Mirrored mode), use explicit `New-NetFirewallRule` calls.
+4. **Error Handling**: Focus on system compatibility rather than IPv6 fallbacks.
+5. **Documentation**: Clearly state IPv6 is not supported in function help.
 
 #### Examples
 

@@ -84,12 +84,13 @@ Test-IsOwnedNatRule -NatName "NAT-Rede50"  # $false
 
 ### 3. IPv6 Explicitamente Não Suportado
 
-**Decisão de Design:** IPv6 não é suportado para operações NAT porque:
+**Decisão de Design:** IPv6 não é suportado para operações NAT porque o protocolo foi desenhado para **eliminar a necessidade de NAT**.
 
-- Compatibilidade varia entre versões do Windows
-- Erros frequentes ("IPV6 sem suporte")
-- Maioria dos usuários precisa apenas de IPv4
-- Remove complexidade desnecessária
+- **Conceito**: Com 2^128 endereços, cada dispositivo IPv6 pode ter um IP global único (GUA), tornando a tradução de endereços (NAT) desnecessária e tecnicamente contraproducente.
+- **WSL 2**: O modo "Mirrored" (WSL 2.0.0+) é a solução moderna para IPv6, eliminando a necessidade de port forwarding manual.
+- **Segurança**: Sem o "NAT implícito", o foco em IPv6 deve ser o **Firewall Explícito** (`New-NetFirewallRule`).
+- **Compatibilidade**: WinNAT gera erros ("IPV6 sem suporte") ao tentar aplicar lógica de NAT IPv4 ao tráfego IPv6.
+- **Simplificação**: Focar apenas em IPv4 reduz drasticamente os pontos de falha no driver WinNAT.
 
 ---
 
