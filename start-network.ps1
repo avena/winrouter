@@ -21,6 +21,11 @@ Write-Log "Checking administrator privileges..." "INFO"
 Ensure-Admin
 Write-Log "Administrator privileges confirmed" "SUCCESS"
 
+# Load Utils module (NAT naming conventions)
+Write-Log "Loading Utils module..." "INFO"
+. "$PSScriptRoot\src\core\Utils.ps1"
+Write-Log "✓ Utils module loaded" "SUCCESS"
+
 # 2. Load Modules
 Write-Log "Loading network modules..." "INFO"
 . "$PSScriptRoot\src\network\Get-Interfaces.ps1"
@@ -171,7 +176,7 @@ switch ($natChoice) {
 
         # Set NAT rule for the current LAN prefix
         $prefix = "192.168.$currentBase.0/24"
-        $natName = "NAT-WinRouter-$currentBase"
+        $natName = Get-NatRuleName -NetworkPrefix $prefix
 
         Write-Log "Creating NAT rule: $natName for prefix: $prefix" "INFO"
         try {
