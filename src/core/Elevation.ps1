@@ -20,3 +20,15 @@ function Ensure-Admin {
         exit
     }
 }
+
+function Get-IPForwardingStatus {
+    $val = (Get-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name IPEnableRouter -ErrorAction SilentlyContinue).IPEnableRouter
+    if ($val -eq 1) { return $true }
+    return $false
+}
+
+function Enable-IPForwarding {
+    Write-Host "Enabling IP Forwarding (Registry)..." -ForegroundColor Cyan
+    Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" -Name IPEnableRouter -Value 1 -Type DWord
+    Write-Host "IP Forwarding enabled." -ForegroundColor Green
+}
