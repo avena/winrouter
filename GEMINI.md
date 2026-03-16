@@ -126,6 +126,114 @@ function New-WinRouterNatRule {
 }
 ```
 
+---
+
+### NAT Implementation Guidelines (Método Validado WinNAT)
+
+#### Pipeline Obrigatório (Ordem Imutável)
+
+```powershell
+# 1. WinNAT ativo antes de qualquer operacao NetNat
+Set-Service -Name "WinNAT" -StartupType Automatic
+Start-Service -Name "WinNAT"
+
+# 2. Clean Slate - Remove TODAS as regras (sem filtro)
+Get-NetNat | Remove-NetNat -Confirm:$false
+Start-Sleep -Seconds 2
+
+# 3. Criar nova regra (unica tentativa, sem retry)
+New-NetNat -Name $Name -InternalIPInterfaceAddressPrefix $Prefix
+
+# 4. Habilitar IP Forwarding (registro)
+Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters" `
+    -Name "IPEnableRouter" -Value 1
+```
+
+#### Regras Não Negociáveis
+
+| #   | Regra                            | Justificativa                    |
+| --- | -------------------------------- | -------------------------------- |
+| 1   | Remoção total, sem filtro        | WinNAT suporta apenas 1 regra    |
+| 2   | Sem SuccessLevel como gate       | Remove-NetNat é idempotente      |
+| 3   | Sem retry loop em New-NetNat     | Falha = problema de estado do SO |
+| 4   | Único caso especial: StopPending | Driver kernel travado → reboot   |
+| 5   | Sleep pós-remoção ≤ 2s           | Mais que isso mascara erro real  |
+
+#### Antipadrões (NUNCA IMPLEMENTAR)
+
+**❌ Antipadrão 1: Remoção Filtrada por Prefixo**
+
+```powershell
+# NUNCA FAZER ISSO
+Get-NetNat | Where-Object { $_.InternalIPInterfaceAddressPrefix -eq $prefix } | Remove-NetNat
+```
+
+**❌ Antipadrão 2: SuccessLevel como Gate**
+
+```powershell
+# NUNCA FAZER ISSO
+if ($removeResult.SuccessLevel -ne 'FULL') { throw "Remoção incompleta" }
+```
+
+**❌ Antipadrão 3: Retry Loop em New-NetNat**
+
+```powershell
+# NUNCA FAZER ISSO
+for ($i = 1; $i -le 3; $i++) { try { New-NetNat ... } catch { Start-Sleep 3 } }
+```
+
+**❌ Antipadrão 4: Classificação de Erro IPv6**
+
+```powershell
+# NUNCA FAZER ISSO
+if ($errMsg -match 'IPv6') { throw "Erro de IPv6: $errMsg" }
+```
+
+**❌ Antipadrão 5: Fallback com netsh Reset**
+
+```powershell
+# NUNCA FAZER ISSO
+& netsh int ip reset
+& netsh winsock reset
+```
+
+**❌ Antipadrão 6: Desabilitar WinNAT Permanentemente**
+
+```powershell
+# NUNCA FAZER ISSO
+& sc.exe config winnat start= disabled
+```
+
+#### Contrato das Funções NAT
+
+**New-WinRouterNatRule:**
+
+- **Input:** `Name` (string), `InternalIPInterfaceAddressPrefix` (string CIDR)
+- **Output:** `$true` (sucesso) ou `throw` (falha)
+- **Side Effects:** WinNAT ativo, todas regras anteriores removidas, nova regra criada
+- **Proibido:** Configurar IPs, modificar rotas, alterar firewall
+
+**Remove-WinRouterNatRule:**
+
+- **Input:** `NatRule` (psobject)
+- **Output:** void ou `throw` (apenas se StopPending)
+- **Side Effects:** WinNAT ativo, todas regras removidas
+- **Proibido:** Desabilitar serviço, chamar netsh reset, modificar registro
+
+#### Checklist de Validação
+
+Antes de commitar, verifique:
+
+- [ ] `Get-NetNat` retorna 1 regra com prefixo correto e `Active=True`
+- [ ] **NÃO** existe `Where-Object` filtrando regras na remoção
+- [ ] **NÃO** existe loop retry em `New-NetNat`
+- [ ] **NÃO** existe classificação de erro IPv6
+- [ ] Único caso especial: `StopPending/not supported` → reboot
+- [ ] Função **NÃO** configura IPs (sem `New-NetIPAddress`)
+- [ ] `Start-Sleep` após remoção é ≤ 2 segundos
+- [ ] **NÃO** desabilita WinNAT permanentemente
+- [ ] **NÃO** chama `netsh reset`
+
 ### Module Organization Principles
 
 #### 1. Single Responsibility Principle

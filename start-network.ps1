@@ -39,8 +39,6 @@ Write-Log "✓ New-NatRule module loaded" "SUCCESS"
 Write-Log "✓ Remove-NatRule module loaded" "SUCCESS"
 . "$PSScriptRoot\src\nat\Test-NatPrerequisites.ps1"
 Write-Log "✓ Test-NatPrerequisites module loaded" "SUCCESS"
-. "$PSScriptRoot\src\nat\Enable-IPv6ForNat.ps1"
-Write-Log "✓ Enable-IPv6ForNat module loaded" "SUCCESS"
 Write-Log "All modules loaded successfully" "SUCCESS"
 
 # 3. Get Interfaces and NAT status
@@ -170,30 +168,15 @@ Write-Log "User selected NAT configuration option: $natChoice" "INFO"
 switch ($natChoice) {
     "S" {
         Write-Log "User selected: Set NAT Rules configuration" "INFO"
-        # Diagnóstico de compatibilidade
-        Write-Log "Running IPv6 compatibility check..." "INFO"
-        Write-Host "Verificando compatibilidade do sistema..." -ForegroundColor Cyan
-        $compativel = Test-IPv6Compatibility -InterfaceAlias $lanInterface.Name
-        
-        if (-not $compativel) {
-            Write-Warning "Sistema com IPv6 desabilitado detectado."
-            Write-Host "WinRouter usará modo IPv4-only." -ForegroundColor Yellow
-            Write-Host "Se encontrar erros, reinicie o sistema antes de continuar." -ForegroundColor Yellow
-            Write-Log "IPv6 compatibility check failed. Using IPv4-only mode." "WARN"
-        }
-        else {
-            Write-Log "IPv6 compatibility check passed" "SUCCESS"
-        }
-        
+
         # Set NAT rule for the current LAN prefix
         $prefix = "192.168.$currentBase.0/24"
         $natName = "NAT-WinRouter-$currentBase"
-        
+
         Write-Log "Creating NAT rule: $natName for prefix: $prefix" "INFO"
-        # Create NAT rule IPv4-only
         try {
             New-WinRouterNatRule -Name $natName -InternalIPInterfaceAddressPrefix $prefix
-            Write-Host "NAT IPv4-only criado com sucesso!" -ForegroundColor Green
+            Write-Host "NAT criado com sucesso!" -ForegroundColor Green
             Write-Log "NAT rule creation successful: $natName" "SUCCESS"
         }
         catch {
