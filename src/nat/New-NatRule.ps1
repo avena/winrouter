@@ -1,82 +1,89 @@
 function New-WinRouterNatRule {
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
         [string]$Name,
 
-        [Parameter(Mandatory = $true)]
-        [string]$InternalIPInterfaceAddressPrefix,
-
-        [Parameter()]
-        [switch]$IPv4Only
+        [Parameter(Mandatory)]
+        [string]$InternalIPInterfaceAddressPrefix
     )
 
-    Write-Host "Creating NAT rule '$Name' for prefix '$InternalIPInterfaceAddressPrefix'..." -ForegroundColor Cyan
+    Write-Log "Criando NAT IPv4-only '$Name' para '$InternalIPInterfaceAddressPrefix'..." "INFO"
 
-    # Check if IPv6 is supported
-    $ipv6Supported = $false
-    try {
-        $ipv6Test = Get-NetIPAddress -AddressFamily IPv6 -ErrorAction SilentlyContinue
-        if ($ipv6Test) { $ipv6Supported = $true }
-    }
-    catch {
-        Write-Log "IPv6 support check failed: $($_.Exception.Message)" "WARN"
-    }
-
-    # If IPv4-only mode is requested or IPv6 is not supported, use IPv4-only approach
-    if ($IPv4Only -or -not $ipv6Supported) {
-        Write-Log "Using IPv4-only mode for NAT creation" "INFO"
-
-        # Ensure duplicate NAT rules for the same prefix are removed before creation
-        $existing = Get-NetNat | Where-Object { $_.InternalIPInterfaceAddressPrefix -eq $InternalIPInterfaceAddressPrefix }
-        if ($existing) {
-            Write-Warning "NAT rule with same prefix already exists. Removing before re-creation..."
-            try {
-                $existing | Remove-NetNat -Confirm:$false -ErrorAction SilentlyContinue
-            }
-            catch {
-                Write-Log "Failed to remove existing NAT rule: $($_.Exception.Message)" "WARN"
-                Write-Host "Could not remove existing NAT rule. Attempting to create new rule anyway..." -ForegroundColor Yellow
-            }
+    # PASSO A: Remover regra existente
+    $existing = Get-NetNat -ErrorAction SilentlyContinue | 
+    Where-Object { $_.InternalIPInterfaceAddressPrefix -eq $InternalIPInterfaceAddressPrefix }
+    
+    if ($existing) {
+        Write-Log "Regra existente encontrada: '$($existing.Name)' Active=$($existing.Active)" "WARN"
+        $removeResult = Remove-WinRouterNatRule -NatRule $existing
+        
+        # GATE: Verificar SuccessLevel antes de criar nova regra
+        if ($removeResult.SuccessLevel -ne 'FULL') {
+            Write-Log "Remocao retornou '$($removeResult.SuccessLevel)'." "WARN"
+            Write-Log "Regra fantasma ainda existe. New-NetNat vai falhar." "WARN"
+            Write-Log "ACAO: Reinicie o PC e execute novamente." "WARN"
+            throw "Falha ao remover regra existente '$Name'. SuccessLevel=$($removeResult.SuccessLevel). Reboot necessario."
         }
+        Write-Log "Remocao confirmada (FULL). Prosseguindo para criacao." "INFO"
+        Start-Sleep -Seconds 2
+    }
 
+    # PASSO B: Tentar criar regra IPv4-only
+    $created = $false
+    $maxRetries = 3
+    
+    for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
+        Write-Log "Tentativa $attempt/$maxRetries de criar NAT IPv4-only '$Name'..." "INFO"
+        
         try {
-            # Create NAT rule with IPv4-only parameters
-            New-NetNat -Name $Name -InternalIPInterfaceAddressPrefix $InternalIPInterfaceAddressPrefix -ErrorAction Stop | Out-Null
-            Write-Host "NAT rule created successfully in IPv4-only mode." -ForegroundColor Green
+            New-NetNat -Name $Name `
+                -InternalIPInterfaceAddressPrefix $InternalIPInterfaceAddressPrefix `
+                -ErrorAction Stop | Out-Null
+            Write-Log "NAT IPv4-only '$Name' criado com sucesso." "SUCCESS"
+            $created = $true
+            break
         }
         catch {
-            Write-Error "Failed to create NAT rule in IPv4-only mode: $($_.Exception.Message)"
-            if ($ipv6Supported) {
-                Write-Host "IPv6 is supported on this system. Consider using IPv6-compatible NAT rules." -ForegroundColor Yellow
+            $errMsg = $_.Exception.Message
+            Write-Log "Tentativa $attempt falhou: $errMsg" "WARN"
+            
+            # Classificar a causa real antes de reagir
+            $isWinnatDead = $errMsg -match 'não há suporte|not supported|StopPending'
+            $isAlreadyExists = $errMsg -match 'already exists|já existe'
+            $isIPv6Issue = $errMsg -match 'IPv6' -and -not $isWinnatDead
+
+            if ($isWinnatDead) {
+                Write-Log "CAUSA REAL: winnat em StopPending — provider CIM indisponivel." "ERROR"
+                Write-Log "Nao e problema de IPv6. Reboot necessario para liberar driver." "ERROR"
+                throw "winnat driver travado (StopPending). Reboot necessario antes de criar NAT."
+            }
+            elseif ($isAlreadyExists) {
+                Write-Log "Regra '$Name' ainda existe (remocao incompleta)." "ERROR"
+                throw "Regra '$Name' nao foi removida. SuccessLevel deve ser FULL antes de criar."
+            }
+            elseif ($isIPv6Issue) {
+                Write-Log "Erro real de IPv6: $errMsg" "ERROR"
+                throw "Problema de IPv6: $errMsg"
             }
             else {
-                Write-Host "IPv6 is not supported on this system. Using IPv4-only NAT rules." -ForegroundColor Yellow
+                Write-Log "Erro desconhecido: $errMsg" "ERROR"
+                throw $errMsg
             }
-            throw
+            
+            if ($attempt -lt $maxRetries) {
+                Start-Sleep -Seconds 3
+            }
         }
     }
-    else {
-        # Standard NAT creation (IPv6 compatible)
-        try {
-            # Ensure duplicate NAT rules for the same prefix are removed before creation
-            $existing = Get-NetNat | Where-Object { $_.InternalIPInterfaceAddressPrefix -eq $InternalIPInterfaceAddressPrefix }
-            if ($existing) {
-                Write-Warning "NAT rule with same prefix already exists. Removing before re-creation..."
-                $existing | Remove-NetNat -Confirm:$false
-            }
 
-            New-NetNat -Name $Name -InternalIPInterfaceAddressPrefix $InternalIPInterfaceAddressPrefix -ErrorAction Stop | Out-Null
-            Write-Host "NAT rule created successfully." -ForegroundColor Green
-        }
-        catch {
-            Write-Error "Failed to create NAT rule: $($_.Exception.Message)"
-            if (-not $ipv6Supported) {
-                Write-Host "IPv6 is not supported on this system. Consider using IPv4-only mode." -ForegroundColor Yellow
-            }
-            throw
-        }
+    if (-not $created) {
+        Write-Log "FALHA ao criar NAT IPv4-only '$Name' apos $maxRetries tentativas." "ERROR"
+        Write-Log "Solução recomendada: Reboot o sistema e tente novamente." "WARN"
+        throw "Falha ao criar regra NAT IPv4-only '$Name'. Reboot o sistema e tente novamente."
     }
+    
+    return $created
 }
 
 # System Information:

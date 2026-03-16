@@ -1,0 +1,131 @@
+[2026-03-15 21:28:09] [INFO] === WinRouter Script Initialization ===
+[2026-03-15 21:28:09] [INFO] Starting WinRouter network configuration script
+[2026-03-15 21:28:09] [DEBUG] PowerShell version: 7.5.5
+[2026-03-15 21:28:09] [DEBUG] Script path: C:\Users\adminrandom\Estudos\winrouter
+[2026-03-15 21:28:09] [DEBUG] Log file: C:\Users\adminrandom\Estudos\winrouter\logs\winrouter-20260315-212809.log
+[2026-03-15 21:28:09] [INFO] Checking administrator privileges...
+[2026-03-15 21:28:09] [SUCCESS] Administrator privileges confirmed
+[2026-03-15 21:28:09] [INFO] Loading network modules...
+[2026-03-15 21:28:09] [SUCCESS] ✓ Get-Interfaces module loaded
+[2026-03-15 21:28:09] [SUCCESS] ✓ Set-StaticIP module loaded
+[2026-03-15 21:28:09] [SUCCESS] ✓ Remove-StaticIP module loaded
+[2026-03-15 21:28:09] [INFO] Loading NAT modules...
+[2026-03-15 21:28:09] [SUCCESS] ✓ Get-NatStatus module loaded
+[2026-03-15 21:28:09] [SUCCESS] ✓ New-NatRule module loaded
+[2026-03-15 21:28:09] [SUCCESS] ✓ Remove-NatRule module loaded
+[2026-03-15 21:28:09] [SUCCESS] ✓ Test-NatPrerequisites module loaded
+[2026-03-15 21:28:09] [SUCCESS] ✓ Enable-IPv6ForNat module loaded
+[2026-03-15 21:28:09] [SUCCESS] All modules loaded successfully
+[2026-03-15 21:28:09] [INFO] Starting interface discovery and NAT status check...
+[2026-03-15 21:28:10] [INFO] Calling Get-WinRouterInterfaces function...
+[2026-03-15 21:28:10] [INFO] Starting interface discovery process...
+[2026-03-15 21:28:10] [INFO] Retrieving existing NAT rules for context...
+[2026-03-15 21:28:10] [INFO] Found 1 existing NAT rules
+[2026-03-15 21:28:10] [INFO] Retrieving network adapters...
+[2026-03-15 21:28:10] [INFO] Found 6 network adapters
+[2026-03-15 21:28:10] [INFO] Processing adapter: Conexão de Rede Bluetooth (Index: 4)
+[2026-03-15 21:28:10] [INFO] Adapter Conexão de Rede Bluetooth has IP: 169.254.111.125
+[2026-03-15 21:28:10] [INFO] Gateway status for Conexão de Rede Bluetooth: Free
+[2026-03-15 21:28:10] [INFO] NAT association for Conexão de Rede Bluetooth: NONE
+[2026-03-15 21:28:10] [INFO] Status for Conexão de Rede Bluetooth: DISCONNECTED
+[2026-03-15 21:28:10] [INFO] Added interface Conexão de Rede Bluetooth to results with selection letter: A
+[2026-03-15 21:28:10] [INFO] Processing adapter: Wi-Fi (Index: 12)
+[2026-03-15 21:28:10] [INFO] Adapter Wi-Fi has IP: 169.254.57.137
+[2026-03-15 21:28:10] [INFO] Gateway status for Wi-Fi: Free
+[2026-03-15 21:28:10] [INFO] NAT association for Wi-Fi: NONE
+[2026-03-15 21:28:10] [INFO] Status for Wi-Fi: DISCONNECTED
+[2026-03-15 21:28:10] [INFO] Added interface Wi-Fi to results with selection letter: B
+[2026-03-15 21:28:11] [INFO] Processing adapter: Ethernet (Index: 14)
+[2026-03-15 21:28:11] [INFO] Adapter Ethernet has IP: 192.168.60.1
+[2026-03-15 21:28:11] [INFO] Gateway status for Ethernet: GATEWAY
+[2026-03-15 21:28:11] [INFO] NAT association for Ethernet: YES (NAT-WinRouter-60)
+[2026-03-15 21:28:11] [INFO] Status for Ethernet: DISCONNECTED
+[2026-03-15 21:28:11] [INFO] Added interface Ethernet to results with selection letter: C
+[2026-03-15 21:28:11] [INFO] Processing adapter: vEthernet (Default Switch) (Index: 33)
+[2026-03-15 21:28:11] [INFO] Adapter vEthernet (Default Switch) has IP: 172.31.64.1
+[2026-03-15 21:28:11] [INFO] Gateway status for vEthernet (Default Switch): GATEWAY
+[2026-03-15 21:28:11] [INFO] NAT association for vEthernet (Default Switch): NONE
+[2026-03-15 21:28:11] [INFO] Status for vEthernet (Default Switch): UP
+[2026-03-15 21:28:11] [INFO] Added interface vEthernet (Default Switch) to results with selection letter: D
+[2026-03-15 21:28:11] [INFO] Processing adapter: vEthernet (WSL (Hyper-V firewall)) (Index: 50)
+[2026-03-15 21:28:11] [INFO] Adapter vEthernet (WSL (Hyper-V firewall)) has IP: 172.26.64.1
+[2026-03-15 21:28:11] [INFO] Gateway status for vEthernet (WSL (Hyper-V firewall)): GATEWAY
+[2026-03-15 21:28:11] [INFO] NAT association for vEthernet (WSL (Hyper-V firewall)): NONE
+[2026-03-15 21:28:11] [INFO] Status for vEthernet (WSL (Hyper-V firewall)): UP
+[2026-03-15 21:28:11] [INFO] Added interface vEthernet (WSL (Hyper-V firewall)) to results with selection letter: E
+[2026-03-15 21:28:11] [INFO] Processing adapter: Ethernet 2 (Index: 54)
+[2026-03-15 21:28:11] [INFO] Adapter Ethernet 2 has IP: 10.245.30.176
+[2026-03-15 21:28:11] [INFO] Gateway status for Ethernet 2: Free
+[2026-03-15 21:28:11] [INFO] NAT association for Ethernet 2: NONE
+[2026-03-15 21:28:11] [INFO] Status for Ethernet 2: UP
+[2026-03-15 21:28:11] [INFO] Added interface Ethernet 2 to results with selection letter: F
+[2026-03-15 21:28:11] [SUCCESS] Interface discovery complete. Processed 6 interfaces
+[2026-03-15 21:28:11] [SUCCESS] Interface discovery complete. Found 6 interfaces
+[2026-03-15 21:28:11] [INFO] Checking NAT rules status...
+[2026-03-15 21:28:11] [INFO] NAT status check complete. Found 1 NAT rules
+[2026-03-15 21:28:11] [INFO] Displaying system NAT status...
+[2026-03-15 21:28:11] [INFO] Active NAT rule: NAT-WinRouter-60 -> 192.168.60.0/24
+[2026-03-15 21:28:11] [INFO] Displaying interface table...
+[2026-03-15 21:28:11] [SUCCESS] Interface table display complete
+[2026-03-15 21:28:11] [INFO] Starting user interface selection process...
+[2026-03-15 21:28:11] [INFO] Prompting user for WAN interface selection...
+[2026-03-15 21:28:17] [INFO] User selected WAN interface: F
+[2026-03-15 21:28:17] [INFO] Prompting user for LAN interface selection...
+[2026-03-15 21:28:18] [INFO] User selected LAN interface: C
+[2026-03-15 21:28:18] [INFO] Validating user selections...
+[2026-03-15 21:28:18] [SUCCESS] Interface validation successful
+[2026-03-15 21:28:18] [INFO] WAN Interface: Ethernet 2 (IP: 10.245.30.176)
+[2026-03-15 21:28:18] [INFO] LAN Interface: Ethernet (IP: 192.168.60.1)
+[2026-03-15 21:28:18] [INFO] Starting IP configuration selection process...
+[2026-03-15 21:28:23] [INFO] User selected IP configuration option: S
+[2026-03-15 21:28:23] [INFO] User selected: Set Static IP configuration
+[2026-03-15 21:28:25] [INFO] User selected network base: 2
+[2026-03-15 21:28:25] [INFO] Setting current network base to: 60
+[2026-03-15 21:28:25] [INFO] Configuring static IP: 192.168.60.1 on interface Ethernet
+[2026-03-15 21:28:25] [INFO] Starting static IP configuration process...
+[2026-03-15 21:28:25] [INFO] Configuring static IP 192.168.60.1/24 on interface index 14
+[2026-03-15 21:28:25] [INFO] Removing existing IPv4 addresses from interface index 14
+[2026-03-15 21:28:25] [INFO] Adding new static IP address: 192.168.60.1
+[2026-03-15 21:28:25] [SUCCESS] Static IP configuration successful: 192.168.60.1 on interface index 14
+[2026-03-15 21:28:25] [SUCCESS] Static IP configuration completed
+[2026-03-15 21:28:25] [INFO] Starting NAT configuration selection process...
+[2026-03-15 21:28:28] [INFO] User selected NAT configuration option: S
+[2026-03-15 21:28:28] [INFO] User selected: Set NAT Rules configuration
+[2026-03-15 21:28:28] [INFO] Running IPv6 compatibility check...
+[2026-03-15 21:28:28] [INFO] Verificando compatibilidade IPv6 (diagnóstico apenas)...
+[2026-03-15 21:28:28] [INFO] IPv6 detectado no sistema.
+[2026-03-15 21:28:28] [SUCCESS] IPv6 compatibility check passed
+[2026-03-15 21:28:28] [INFO] Creating NAT rule: NAT-WinRouter-60 for prefix: 192.168.60.0/24
+[2026-03-15 21:28:28] [INFO] Criando NAT IPv4-only 'NAT-WinRouter-60' para '192.168.60.0/24'...
+[2026-03-15 21:28:28] [WARN] Regra existente encontrada: 'NAT-WinRouter-60' Active=False
+[2026-03-15 21:28:28] [INFO] Starting NAT rule removal process...
+[2026-03-15 21:28:28] [INFO] Processing NAT rule: NAT-WinRouter-60
+[2026-03-15 21:28:28] [INFO] Checking NAT rule status before removal...
+[2026-03-15 21:28:28] [INFO] Regra 'NAT-WinRouter-60': [INATIVA] (Exists=True)
+[2026-03-15 21:28:28] [INFO] Regra INATIVA detectada. Usando caminho rapido (sem parar winnat).
+[2026-03-15 21:28:28] [INFO] === Remocao de regra INATIVA: 'NAT-WinRouter-60' ===
+[2026-03-15 21:28:28] [WARN] Remove-NetNat falhou: Não há suporte à operação solicitada.
+[2026-03-15 21:28:28] [WARN] CIM direto falhou: Não há suporte à operação solicitada.
+[2026-03-15 21:28:28] [WARN] Tentando remocao via registro...
+[2026-03-15 21:28:28] [WARN] Registro nao encontrado. Regra sera limpa no reboot.
+[2026-03-15 21:28:28] [INFO] WinNAT marcado como disabled.
+[2026-03-15 21:28:28] [SUCCESS] IPEnableRouter = 0 OK.
+[2026-03-15 21:28:29] [INFO] === VERIFICACAO FINAL ===
+[2026-03-15 21:28:29] [INFO] IPEnableRouter final: 0
+[2026-03-15 21:28:29] [INFO] WinNAT final: StopPending / Disabled
+[2026-03-15 21:28:29] [SUCCESS] SUCESSO PARCIAL: 'NAT-WinRouter-60' inativa + winnat desabilitado. Limpar no reboot.
+[2026-03-15 21:28:29] [WARN] Remocao retornou ''.
+[2026-03-15 21:28:29] [WARN] Regra fantasma ainda existe. New-NetNat vai falhar.
+[2026-03-15 21:28:29] [WARN] ACAO: Reinicie o PC e execute novamente.
+[2026-03-15 21:28:29] [ERROR] ERROR: NAT rule creation failed: Falha ao remover regra existente 'NAT-WinRouter-60'. SuccessLevel=. Reboot necessario.
+[2026-03-15 21:28:29] [INFO] Starting final configuration steps...
+[2026-03-15 21:28:29] [INFO] Enabling IP forwarding...
+[2026-03-15 21:28:29] [SUCCESS] IP forwarding enabled successfully
+[2026-03-15 21:28:29] [INFO] Generating final status report...
+[2026-03-15 21:28:29] [INFO] Checking final NAT rules status...
+[2026-03-15 21:28:29] [INFO] Final NAT status: No active rules
+[2026-03-15 21:28:29] [WARN] Regras fantasma (Active=False, pendente reboot): NAT-WinRouter-60
+[2026-03-15 21:28:29] [WARN] Configuration INCOMPLETE: reboot necessario para limpar estado.
+[2026-03-15 21:28:29] [SUCCESS] Configuration process completed successfully
+[2026-03-15 21:28:29] [INFO] Script execution completed. Waiting for user to exit...
+[2026-03-15 21:28:34] [INFO] User exited script

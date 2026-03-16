@@ -242,8 +242,8 @@ function Remove-InactiveNatRule {
         $successLevel = "FAILED"
     }
 
-    # Output para o caller
-    return [PSCustomObject]@{
+    # Output para o caller (usando Write-Output para evitar vazamento)
+    Write-Output [PSCustomObject]@ {
         NatName      = $NatName
         SuccessLevel = $successLevel
         NatFinal     = $natFinal
@@ -261,9 +261,12 @@ function Remove-WinRouterNatRule {
         [switch]$AllowNukeFallback
     )
 
+    Write-Log "Starting NAT rule removal process..." "INFO"
     $NatName = $NatRule.Name
+    Write-Log "Processing NAT rule: $NatName" "INFO"
 
     # === PASSO 2A: Leitura de status ANTES de qualquer acao ===
+    Write-Log "Checking NAT rule status before removal..." "INFO"
     $status = Get-NatRuleStatus -NatName $NatName
     Write-Log "Regra '$NatName': $($status.StatusLabel) (Exists=$($status.Exists))" "INFO"
 
@@ -283,7 +286,7 @@ function Remove-WinRouterNatRule {
     Write-Log "Regra ATIVA. Iniciando fluxo completo de remocao..." "INFO"
 
     # Estado inicial
-    Write-Log "Estado inicial:" "INFO"
+    Write-Log "Capturing initial system state..." "INFO"
     Write-Log "  WinNAT: $((Get-Service -Name 'winnat').Status)" "INFO"
     $routerInicial = (Get-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters' -Name 'IPEnableRouter' -ErrorAction SilentlyContinue).IPEnableRouter
     Write-Log "  IPEnableRouter: $routerInicial" "INFO"
@@ -420,4 +423,6 @@ function Remove-WinRouterNatRule {
         Write-Host "FALHA: Regra '$NatName' ainda ativa!" -ForegroundColor Red
         Write-Host "Execute: sc config winnat start= disabled && reboot" -ForegroundColor Yellow
     }
+    
+    Write-Log "NAT rule removal process completed for: $NatName" "INFO"
 }

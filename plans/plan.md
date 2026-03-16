@@ -82,28 +82,46 @@ winrouter/
 
 ### System Information:
 
-- **Windows**: Windows 1 with PowerShell
-- **Focus**: IPv4-only configuration (no IPv6 support)
+- **Windows**: Windows 10/11 with PowerShell 5.1+
+- **Focus**: IPv4-only configuration (IPv6 not supported)
 - **Privileges**: Running with administrator privileges
-- **Issues**: NAT rule creation/removal failures due to IPv6 compatibility issues
+- **Issues**: NAT rule creation/removal failures due to IPv6 compatibility issues (resolved by IPv6 removal)
 
 ### IPv4 Configuration Requirements:
 
-- Implement IPv4-only mode with enhanced error handling
-- Add fallback NAT creation methods for IPv6 failures
-- Include comprehensive error handling for IPv6 compatibility issues
-- Provide clear error messages for IPv6-related failures
+- **IPv6 is not supported** in WinRouter NAT operations
+- All NAT rules must use IPv4 addresses exclusively
+- Error handling focuses on system compatibility rather than IPv6 fallbacks
+- Clear error messages for system compatibility issues
+
+### IPv6 Guidelines:
+
+**IPv6 is explicitly not supported** in WinRouter for the following reasons:
+
+1. **Compatibility Issues**: IPv6 support varies significantly between Windows versions
+2. **Common Failures**: "IPV6 sem suporte" errors are frequent on many systems
+3. **Limited Practical Use**: Most users only need IPv4 NAT functionality
+4. **Complexity Reduction**: Removing IPv6 simplifies code and reduces failure points
+
+### Development Guidelines:
+
+1. **NAT Functions**: All NAT-related functions must be IPv4-only
+2. **No IPv6 Parameters**: Do not add IPv6-related parameters to NAT functions
+3. **Error Handling**: Focus on system compatibility rather than IPv6 fallbacks
+4. **Documentation**: Clearly state IPv6 is not supported in function help
 
 ### Troubleshooting Guidelines:
 
-1. **IPv6 Support Error**: "IPV6 sem suporte" occurs during NAT creation
-2. **Remove-NetNat Operation Error**: "Não há suporte à operação solicitada" during NAT removal
-3. **Root Cause**: IPv6 compatibility issues in Windows NAT implementation
-4. **Solution**: Implement IPv4-only mode with enhanced error handling
+1. **System Compatibility Error**: "Não há suporte à operação solicitada" occurs during NAT operations
+2. **Root Cause**: System compatibility issues, not IPv6 problems
+3. **Solution**: Focus on system compatibility and Windows version updates
+4. **No IPv6 Troubleshooting**: IPv6 is not supported, so IPv6-related troubleshooting is not applicable
 
 ### For more information, see:
 
-- `src/nat/Remove-NatRule.ps1`: System information and troubleshooting guidelines
+- `src/nat/New-NatRule.ps1`: IPv4-only NAT creation implementation
+- `src/nat/Remove-NatRule.ps1`: IPv4-only NAT removal implementation
+- `docs/NAT_FIX_SUMMARY.md`: Complete IPv6 removal documentation
 - `docs/TROUBLESHOOTING.md`: Comprehensive troubleshooting guide
 
 ## Next Steps

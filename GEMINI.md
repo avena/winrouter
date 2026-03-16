@@ -76,6 +76,56 @@ Get-ChildItem -Path $PSScriptRoot -Filter *.ps1 -Recurse |
 Export-ModuleMember -Function *
 ```
 
+### IPv6 Guidelines
+
+#### IPv6 Support Policy
+
+**IPv6 is not supported** in WinRouter NAT operations. All NAT-related functionality is IPv4-only.
+
+#### Rationale for IPv6 Exclusion
+
+- **Compatibility Issues**: IPv6 support varies significantly between Windows versions
+- **Common Failures**: "IPV6 sem suporte" errors are frequent on many systems
+- **Limited Practical Use**: Most users only need IPv4 NAT functionality
+- **Complexity Reduction**: Removing IPv6 simplifies code and reduces failure points
+
+#### Development Guidelines
+
+1. **NAT Functions**: All NAT-related functions must be IPv4-only
+2. **No IPv6 Parameters**: Do not add IPv6-related parameters to NAT functions
+3. **Error Handling**: Focus on system compatibility rather than IPv6 fallbacks
+4. **Documentation**: Clearly state IPv6 is not supported in function help
+
+#### Examples
+
+**❌ DO NOT DO THIS:**
+
+```powershell
+function New-WinRouterNatRule {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [string]$InternalIPInterfaceAddressPrefix,
+        [switch]$IPv6Enabled  # IPv6 not supported
+    )
+}
+```
+
+**✅ DO THIS INSTEAD:**
+
+```powershell
+function New-WinRouterNatRule {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [Parameter(Mandatory=$true)]
+        [string]$InternalIPInterfaceAddressPrefix
+    )
+    # IPv4-only implementation
+}
+```
+
 ### Module Organization Principles
 
 #### 1. Single Responsibility Principle
