@@ -196,17 +196,14 @@ switch ($natChoice) {
             break
         }
 
-        Write-Log "Found $($natRules.Count) NAT rules for removal" "INFO"
+        Write-Log "Found $($natRules.Count) NAT rules for potential removal" "INFO"
         $confirmRemove = Read-Host "Remove ALL NAT rules? (Y/N)"
         Write-Log "User confirmation for NAT removal: $confirmRemove" "INFO"
         
         if ($confirmRemove -match '^[Yy]') {
-            Write-Log "Removing all NAT rules..." "INFO"
+            Write-Log "Removing all NAT rules using Clean Slate method..." "INFO"
             Write-Host "Removing all NAT rules..." -ForegroundColor Cyan
-            foreach ($rule in $natRules) {
-                Write-Log "Removing NAT rule: $($rule.Name)" "INFO"
-                Remove-WinRouterNatRule -NatRule $rule
-            }
+            Remove-WinRouterNatRule -Description "User requested ALL removal"
             Write-Log "All NAT rules removal completed" "SUCCESS"
         }
         else {
@@ -220,8 +217,8 @@ switch ($natChoice) {
             
             if ([int]::TryParse($ruleIdxStr, [ref]$ruleIdx) -and $ruleIdx -ge 1 -and $ruleIdx -le $natRules.Count) {
                 $ruleToRemove = $natRules[[int]$ruleIdx - 1]
-                Write-Log "Removing selected NAT rule: $($ruleToRemove.Name)" "INFO"
-                Remove-WinRouterNatRule -NatRule $ruleToRemove
+                Write-Log "Removing selected NAT rule: $($ruleToRemove.Name) (Note: Clean Slate will remove ALL)" "INFO"
+                Remove-WinRouterNatRule -Description "Selected rule: $($ruleToRemove.Name)"
                 Write-Log "Selected NAT rule removal completed" "SUCCESS"
             }
             else {
@@ -280,7 +277,6 @@ else {
     Write-Log "Configuration INCOMPLETE: reboot necessario para limpar estado." "WARN"
 }
 
-Write-Log "Configuration process completed successfully" "SUCCESS"
 Write-Host ""
 Write-Host "Configuration Complete. Internet sharing should be active." -ForegroundColor Green
 Write-Log "Script execution completed. Waiting for user to exit..." "INFO"

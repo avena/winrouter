@@ -21,11 +21,11 @@ function Remove-WinRouterNatRule {
     2. Remove TODAS as regras NAT existentes (sem filtro)
     3. Aguarda 2 segundos para propagacao
 
-    .PARAMETER NatRule
-    Objeto da regra NAT (informacao para log, nao usado no filtro)
+    .PARAMETER Description
+    Descricao opcional da operacao (ex: nome da regra sendo removida)
 
     .EXAMPLE
-    Remove-WinRouterNatRule -NatRule $rule
+    Remove-WinRouterNatRule -Description "Limpeza manual"
 
     .NOTES
     Metodo validado em producao - 2026-03-15
@@ -34,12 +34,11 @@ function Remove-WinRouterNatRule {
 
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
-        [psobject]$NatRule
+        [Parameter(Mandatory = $false)]
+        [string]$Description = "All Rules"
     )
 
-    $ruleName = $NatRule.Name
-    Write-Log "Removendo regra NAT '$ruleName' (Clean Slate)..." "INFO"
+    Write-Log "Iniciando remocao de regras NAT (Clean Slate: $Description)..." "INFO"
 
     # ========================================================================
     # PASSO 1: Garantir que servico WinNAT esta ativo
@@ -87,5 +86,5 @@ function Remove-WinRouterNatRule {
         Write-Log "Aviso na remocao NAT: $_" "WARN"
     }
 
-    Write-Log "Remocao da regra '$ruleName' concluida." "INFO"
+    Write-Log "Finalizada remocao de regras NAT." "INFO"
 }
